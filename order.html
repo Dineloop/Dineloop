@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DineLoop · Digital Menu & Order</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{--bg:#0b0c10;--tx:#f6f1e7;--mu:#a39d93;--ac:#e2b75c;--sf:linear-gradient(155deg,rgba(35,38,48,.94),rgba(17,19,25,.97));--pri:linear-gradient(135deg,#f8df94,#d7a13b,#9c6b16);--ln:rgba(226,183,92,.3);--ok:#34d399;--wr:#fb7185;--inbg:#090a0e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;color:var(--tx);font:500 15px/1.45 "Plus Jakarta Sans",system-ui,sans-serif;background:repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px),var(--bg);padding-bottom:90px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;background:#14161e;border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:20}
+h1{font:700 17px Cinzel,Outfit,sans-serif;margin:0;background:var(--pri);-webkit-background-clip:text;background-clip:text;color:transparent}
+main{padding:12px;max-width:760px;margin:auto}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:16px;padding:14px;margin-bottom:12px}
+button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--ln);background:rgba(45,48,60,.8);color:var(--tx);border-radius:10px;padding:7px 12px}
+button.pri,button.on{background:var(--pri);color:#191206;font-weight:700;border-color:transparent}
+button.ok{border-color:var(--ok);color:var(--ok);background:rgba(52,211,153,.12)}
+button.sm{padding:5px 9px;font-size:13px}
+.tbs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-top:8px}
+.menu button{text-align:left;padding:11px}.menu small{display:block;color:var(--mu);font-size:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(163,157,147,.16)}
+input,textarea{font:inherit;color:var(--tx);background:var(--inbg);border:1px solid var(--ln);border-radius:10px;padding:9px 11px;width:100%}
+.qr-box{background:#fff;padding:12px;border-radius:12px;display:inline-block;margin:8px auto}
+.bar-btm{position:fixed;left:10px;right:10px;bottom:10px;max-width:740px;margin:auto;background:#14161e;border:1px solid var(--ac);border-radius:14px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;z-index:30}
+.mu{color:var(--mu);font-size:13px}#toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);background:var(--pri);color:#191206;font-weight:700;padding:9px 16px;border-radius:99px;display:none;z-index:70}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="rTitle">🍽️ DINELOOP</h1>
+  <div class="tbs" style="margin:0">
+    <span id="tblBadge" style="font-size:12px;color:var(--ac);align-self:center"></span>
+    <button class="sm" id="btnL" onclick="lang=lang==='en'?'hi':'en';render()">EN/हिं</button>
+  </div>
+</header>
+<main id="v"><div class="card">Loading menu…</div></main>
+<div id="toast"></div>
+
+<script>
+const CFG={url:"https://edgklbjmkewdokvptksx.supabase.co",key:"sb_publishable_3Vjm7jhwAKDP9d5BFhaUvA_qOBXKqWc"};
+const $=s=>document.querySelector(s),R=n=>Math.round((+n||0)*100)/100;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const Q=new URLSearchParams(location.search);
+const outlet=Q.get("outlet")||"main",table=Q.get("table")||"",mode=Q.get("mode")||"",fbInv=Q.get("fb")||"",trackTok=Q.get("track")||"",refCode=Q.get("ref")||"";
+
+let sb=window.supabase?supabase.createClient(CFG.url,CFG.key):null;
+let pub={rName:"DINELOOP",menu:[],upiId:"",upiName:"",taxPct:5,taxInc:false,googleReviewUrl:""};
+let cart=[],cat="All",q="",lang="en",myTok=trackTok,trackData=null,fbStar=5,fbDone=false,joinDone=false;
+
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500);}
+function makeQrSvg(text,px=200){
+  if(!window.qrcode||!text)return"";
+  const qr=qrcode(0,"M");qr.addData(text);qr.make();
+  const n=qr.getModuleCount(),cell=Math.max(3,Math.floor(px/n)),sz=n*cell;let d="";
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))d+=`M${c*cell},${r*cell}h${cell}v${cell}h-${cell}z`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+
+async function boot(){
+  if(sb){
+    const r=await sb.from("public_menus").select("data").eq("restaurant_id",outlet).maybeSingle();
+    if(r.data&&r.data.data)pub=Object.assign(pub,r.data.data);
+  }
+  if(myTok)await refreshTrack();
+  render();
+}
+async function refreshTrack(){
+  if(!sb||!myTok)return;
+  const r=await sb.rpc("get_order_status",{p_token:myTok});
+  if(!r.error&&r.data)trackData=r.data;
+}
+
+function add(id){
+  const m=pub.menu.find(x=>x.id==id);if(!m||m.oos)return;
+  const l=cart.find(x=>x.id==id);l?l.q++:cart.push({id,n:m.n,p:+m.p||0,q:1});
+  render();
+}
+function chg(i,d){cart[i].q+=d;if(cart[i].q<=0)cart.splice(i,1);render();}
+function totCalc(){
+  const sub=R(cart.reduce((a,l)=>a+l.p*l.q,0));
+  const tax=pub.taxInc?0:R(sub*(+pub.taxPct||0)/100);
+  return{sub,tax,tot:Math.round(sub+tax)};
+}
+
+async function submitOrder(){
+  if(!cart.length)return toast("Add items first");
+  const nm=$("#gNm").value.trim()||"Guest",ph=$("#gPh").value.replace(/\D/g,"");
+  if(!table&&ph.length!==10)return toast("Enter 10-digit mobile for online order");
+  const t=totCalc(),tok="ORD-"+Math.random().toString(36).slice(2,8).toUpperCase();
+  const payload={items:cart,tot:t.tot,note:$("#gNt").value.trim()};
+  if(sb){
+    const r=await sb.from("public_orders").insert({
+      restaurant_id:outlet,order_token:tok,kind:table?"qr_order":"online_order",
+      table_name:table||"Online",guest_name:nm,guest_phone:ph,status:"new",payload
+    });
+    if(r.error)return toast(r.error.message);
+  }
+  myTok=tok;cart=[];await refreshTrack();render();toast("Order sent to Kitchen!");
+}
+
+async function submitFeedback(){
+  if(!sb)return;
+  const msg=$("#fbMsg").value.trim(),nm=$("#fbNm").value.trim()||"Guest";
+  const r=await sb.from("public_orders").insert({
+    restaurant_id:outlet,order_token:"FB-"+Date.now(),kind:"feedback",
+    guest_name:nm,guest_phone:Q.get("ph")||"",status:"completed",
+    payload:{rating:fbStar,msg,inv:fbInv}
+  });
+  if(r.error)return toast(r.error.message);
+  fbDone=true;render();
+}
+
+async function submitJoin(){
+  const nm=$("#jNm").value.trim(),ph=$("#jPh").value.replace(/\D/g,"");
+  if(!nm||ph.length!==10)return toast("Enter name & 10-digit mobile");
+  if(sb){
+    const r=await sb.from("public_orders").insert({
+      restaurant_id:outlet,order_token:"LOY-"+Date.now(),kind:"loyalty_join",
+      guest_name:nm,guest_phone:ph,status:"new",payload:{ref:refCode}
+    });
+    if(r.error)return toast(r.error.message);
+  }
+  joinDone=true;render();
+}
+
+function render(){
+  $("#rTitle").textContent="🍽️ "+(pub.rName||"DINELOOP").toUpperCase();
+  $("#tblBadge").textContent=table?((lang==="hi"?"टेबल ":"Table ")+table):"";
+  $("#btnL").textContent=lang==="hi"?"हिं":"EN";
+
+  if(fbInv){
+    $("#v").innerHTML=`<div class="card"><b>${lang==="hi"?"अपना अनुभव बताएं":"Rate Your Visit"} (${esc(fbInv)})</b>
+      ${fbDone?`<p style="color:var(--ok)"><b>Thank you for your feedback!</b></p>
+        ${fbStar>=4&&pub.googleReviewUrl?`<a href="${esc(pub.googleReviewUrl)}" target="_blank"><button class="pri">★ Leave a Google Review</button></a>`:""}`
+      :`<div class="tbs" style="margin:12px 0">${[1,2,3,4,5].map(s=>`<button class="${fbStar===s?"on":""}" onclick="fbStar=${s};render()">${s} ★</button>`).join("")}</div>
+        <input id="fbNm" placeholder="Your Name" style="margin-bottom:8px">
+        <textarea id="fbMsg" rows="3" placeholder="Tell us what you loved or what we can improve…"></textarea>
+        <button class="pri" style="margin-top:10px" onclick="submitFeedback()">Submit Feedback</button>`}
+    </div>`;
+    return;
+  }
+
+  if(mode==="join"){
+    $("#v").innerHTML=`<div class="card"><b>✦ Join ${esc(pub.rName)} Loyalty Club</b>
+      ${joinDone?`<p style="color:var(--ok)"><b>Welcome! Your Loyalty request is sent. Mention your mobile at billing to earn points!</b></p>`
+      :`<p class="mu">Earn reward points on every order & unlock exclusive WhatsApp offers.</p>
+        <input id="jNm" placeholder="Your Name" style="margin:8px 0">
+        <input id="jPh" placeholder="10-digit Mobile" maxlength="10" style="margin-bottom:10px">
+        <button class="pri" onclick="submitJoin()">Join Now</button>`}
+    </div>`;
+    return;
+  }
+
+  if(myTok&&trackData){
+    const uri=pub.upiId?`upi://pay?pa=${encodeURIComponent(pub.upiId)}&pn=${encodeURIComponent(pub.upiName||pub.rName)}&am=${(+trackData.total||0).toFixed(2)}&cu=INR&tn=${encodeURIComponent(myTok)}`:"";
+    $("#v").innerHTML=`<div class="card" style="text-align:center">
+      <b>Live Order Status · ${esc(myTok)}</b>
+      <div style="font:800 24px Outfit,sans-serif;color:var(--ac);margin:10px 0">${esc((trackData.status||"new").toUpperCase())}</div>
+      <p class="mu">${esc(trackData.table_name)} · Total ₹${trackData.total}</p>
+      ${uri?`<div class="qr-box">${makeQrSvg(uri,190)}</div><br><a href="${uri}"><button class="ok">Pay ₹${trackData.total} via UPI App</button></a>`:""}
+      <div class="tbs" style="justify-content:center;margin-top:12px">
+        <button onclick="refreshTrack().then(render)">Refresh Status</button>
+        <button onclick="myTok='';trackData=null;render()">Order More</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const cats=["All",...new Set((pub.menu||[]).map(m=>m.c||"Mains"))],t=totCalc();
+  $("#v").innerHTML=`
+  <div class="card">
+    <b>${lang==="hi"?"डिजिटल मेनू":"Digital Menu"}</b>
+    <div class="tbs">${cats.map(c=>`<button class="sm ${cat===c?"on":""}" onclick="cat='${esc(c)}';render()">${esc(c)}</button>`).join("")}</div>
+    <input placeholder="${lang==="hi"?"डिश खोजें…":"Search dish…"}" value="${esc(q)}" oninput="q=this.value;render()">
+    <div class="menu">${(pub.menu||[]).filter(m=>!m.oos&&(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase())).map(m=>`<button onclick="add(${m.id})"><b>${esc(m.n)}</b><small>₹${m.p}</small></button>`).join("")||`<p class="mu">Menu loading or empty.</p>`}</div>
+  </div>
+  ${cart.length?`<div class="card"><b>${lang==="hi"?"आपका ऑर्डर":"Your Order"}</b>
+    ${cart.map((l,i)=>`<div class="row"><span>${esc(l.n)}</span><span><button class="sm" onclick="chg(${i},-1)">−</button> ${l.q} <button class="sm" onclick="chg(${i},1)">+</button></span><b>₹${R(l.p*l.q)}</b></div>`).join("")}
+    <div class="row"><b>Total (incl. GST)</b><b style="color:var(--ac);font-size:18px">₹${t.tot}</b></div>
+    <div style="margin-top:8px;display:grid;gap:6px">
+      <input id="gNm" placeholder="Your Name">
+      <input id="gPh" placeholder="Mobile (10 digits)" maxlength="10">
+      <input id="gNt" placeholder="Cooking note (e.g. Less spicy)">
+      <button class="pri" onclick="submitOrder()">${lang==="hi"?"ऑर्डर भेजें":"Place Order"} (₹${t.tot})</button>
+    </div>
+  </div>
+  <div class="bar-btm"><span><b>${cart.reduce((a,l)=>a+l.q,0)} items</b> · ₹${t.tot}</span><button class="pri sm" onclick="window.scrollTo(0,document.body.scrollHeight)">Checkout</button></div>`:""}`;
+}
+boot();
+</script>
+</body>
+</html>

@@ -91,6 +91,7 @@ input,select{font:inherit;color:var(--tx);background:var(--inbg);border:1px soli
   <span class="pill" id="st"></span>
   <span class="tag" id="who" style="margin-left:auto"></span>
   <button class="sm pri" id="btnInstall" style="display:none" onclick="installApp()">📲 Install</button>
+  <button class="sm" id="btnLang" onclick="toggleLang()">EN</button>
   <button class="sm" onclick="cycleTheme()">🎨</button>
   <button class="sm" id="btnOut" style="display:none" onclick="doLogout()">Logout</button>
 </header>
@@ -102,7 +103,9 @@ input,select{font:inherit;color:var(--tx);background:var(--inbg);border:1px soli
 const CFG={url:"https://edgklbjmkewdokvptksx.supabase.co",key:"sb_publishable_3Vjm7jhwAKDP9d5BFhaUvA_qOBXKqWc",outlet:"main"};
 const $=s=>document.querySelector(s),R=n=>Math.round((+n||0)*100)/100;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const TB=["T1","T2","T3","T4","T5","T6","T7","T8","Counter","Takeaway"];
+let TB=["T1","T2","T3","T4","T5","T6","T7","T8","Counter","Takeaway"];
+let lang="en";try{lang=localStorage.getItem("dl_lang")||"en";}catch(e){}
+function toggleLang(){lang=lang==="en"?"hi":"en";try{localStorage.setItem("dl_lang",lang);}catch(e){}render();}
 
 const THEMES=["","copper","titanium"];
 let curTheme="";try{curTheme=localStorage.getItem("dl_theme")||"";if(curTheme)document.documentElement.setAttribute("data-theme",curTheme);}catch(e){}
@@ -119,6 +122,7 @@ function normState(x){
   s.menu=Array.isArray(s.menu)?s.menu:d.menu;s.stock=Array.isArray(s.stock)?s.stock:[];
   s.cust=s.cust||{};s.bills=Array.isArray(s.bills)?s.bills:[];s.kots=Array.isArray(s.kots)?s.kots:[];
   s.open=s.open||{};s.openMeta=s.openMeta||{};s.kn=+s.kn||0;s.cfg=Object.assign(defaultCfg(),s.cfg||{});
+  if(Array.isArray(s.cfg.tables)&&s.cfg.tables.length)TB=s.cfg.tables;
   return s;
 }
 
@@ -262,9 +266,10 @@ function verifyGuestCode(){
   else toast("WRONG CODE! Does not match Reception record.");
 }
 function sendKot(){
-  const o=S.open[tb]||[],mt=meta(tb),it=o.filter(l=>l.q>l.sent).map(l=>({n:itemLabel(l),q:l.q-l.sent,note:l.note||""}));
+  const o=S.open[tb]||[],mt=meta(tb),it=o.filter(l=>l.q>l.sent).map(l=>{const m=M(l.id);return{n:itemLabel(l),q:l.q-l.sent,note:l.note||"",st:(m&&m.st)||"Main Kitchen",prep:(m&&m.prep)||12};});
   if(!it.length)return toast("No new items to send");
-  const k={id:++S.kn,table:tb,mode:mt.mode,prepaid:!!mt.prepaid,by:activeName,items:it,st:0,t:Date.now()};
+  const maxPrep=Math.max(...it.map(x=>x.prep||12));
+  const k={id:++S.kn,table:tb,mode:mt.mode,prepaid:!!mt.prepaid,by:activeName,items:it,st:0,t:Date.now(),prep:maxPrep};
   S.kots.push(k);o.forEach(l=>l.sent=l.q);save();render();toast("KOT #"+k.id+" sent to Kitchen!");
 }
 function pay(m){
@@ -285,8 +290,8 @@ function clearTable(){
 
 function render(){
   $("#brand").textContent="🍽️ "+(S.cfg.rName||"DINELOOP")+" WAITER";
-  $("#st").textContent=sb?("LIVE · "+activeOutlet):"LOCAL";$("#st").className="pill"+(sb?"":" l");
-  $("#who").textContent=activeName;$("#btnOut").style.display=sb&&user?"inline-block":"none";
+  $("#st").textContent=sb?("● "+activeOutlet):"LOCAL";$("#st").className="pill"+(sb?"":" l");
+  $("#who").textContent=activeName;$("#btnLang").textContent=lang==="hi"?"हिं":"EN";$("#btnOut").style.display=sb&&user?"inline-block":"none";
   const cats=["All",...new Set(S.menu.map(m=>m.c||"Mains"))],c=calc(tb),mt=c.mt;
   const unsent=c.o.filter(l=>l.q>l.sent).reduce((a,l)=>a+(l.q-l.sent),0);
 

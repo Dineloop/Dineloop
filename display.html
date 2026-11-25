@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DineLoop · Customer Display</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Outfit:wght@600;800&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+body{margin:0;background:#0b0c10;color:#f6f1e7;font:500 17px/1.5 "Plus Jakarta Sans",sans-serif;display:grid;grid-template-columns:1.2fr 1fr;min-height:100vh}
+@media(max-width:760px){body{grid-template-columns:1fr}}
+.left{padding:28px;border-right:1px solid rgba(226,183,92,.25)}
+.right{padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at center,rgba(226,183,92,.14),transparent 65%)}
+h1{font:700 28px Cinzel,sans-serif;margin:0 0 18px;color:#e2b75c}
+.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.tot{font:800 42px Outfit,sans-serif;color:#e2b75c;margin:10px 0}
+.qr{background:#fff;padding:16px;border-radius:16px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="left"><h1 id="nm">DINELOOP</h1><div id="list">Welcome! Your order will appear here.</div></div>
+<div class="right"><div id="pay"></div></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function qrSvg(t,px=240){
+  if(!window.qrcode||!t)return"";
+  const qr=qrcode(0,"M");qr.addData(t);qr.make();
+  const n=qr.getModuleCount(),cell=Math.max(4,Math.floor(px/n)),sz=n*cell;let d="";
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))d+=`M${c*cell},${r*cell}h${cell}v${cell}h-${cell}z`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+function draw(d){
+  if(!d)return;
+  $("#nm").textContent=(d.rName||"DINELOOP").toUpperCase()+" · "+(d.table||"");
+  $("#list").innerHTML=(d.items&&d.items.length)?d.items.map(i=>`<div class="row"><span>${i.q}× ${esc(i.n)}</span><b>₹${i.p*i.q}</b></div>`).join("")
+    +`<div class="row"><span>Tax & Charges</span><span>₹${d.tax||0}</span></div>`
+    +(d.disc?`<div class="row"><span>Discount</span><span>−₹${d.disc}</span></div>`:"")
+    :`<p style="opacity:.6">Waiting for next guest order…</p>`;
+  $("#pay").innerHTML=d.due>0?`<div>AMOUNT TO PAY</div><div class="tot">₹${d.due}</div>${d.upiUri?`<div class="qr">${qrSvg(d.upiUri,240)}</div><p style="opacity:.75">Scan with any UPI app</p>`:""}`:`<div class="tot">Welcome!</div><p style="opacity:.7">Thank you for dining with us</p>`;
+}
+try{draw(JSON.parse(localStorage.getItem("dl_display_cart")||"null"));}catch(e){}
+if(typeof BroadcastChannel!=="undefined")new BroadcastChannel("dl_display").onmessage=e=>draw(e.data);
+window.addEventListener("storage",e=>{if(e.key==="dl_display_cart")try{draw(JSON.parse(e.newValue));}catch(err){}});
+</script>
+</body>
+</html>

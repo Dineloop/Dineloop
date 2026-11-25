@@ -1,8 +1,14 @@
-const CACHE = "dineloop-v2";
+const CACHE = "dineloop-v3";
 const ASSETS = [
   "/",
   "/index.html",
   "/waiter.html",
+  "/order.html",
+  "/display.html",
+  "/js/landing.js",
+  "/js/crm.js",
+  "/js/erp.js",
+  "/js/platform.js",
   "/manifest.webmanifest",
   "/manifest-waiter.webmanifest",
   "/icon-192.png",

@@ -1,116 +1,1383 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DineLoop Command Deck</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <style>
-:root{--bg:#05060f;--sf:rgba(14,20,45,.68);--tx:#e6f1ff;--mu:#7d8bb0;--ac:#22d3ee;--ac2:#a855f7;--ln:rgba(34,211,238,.28);--wr:#ff4d6d;--ok:#4ade80;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#05060f;--sf:rgba(14,20,45,.74);--sf2:rgba(8,12,30,.9);--tx:#e6f1ff;--mu:#8a99bf;--ac:#22d3ee;--ac2:#a855f7;--ln:rgba(34,211,238,.28);--wr:#ff4d6d;--ok:#4ade80;--wn:#facc15;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;color:var(--tx);font:500 15px/1.4 Rajdhani,system-ui,sans-serif;background:var(--bg) radial-gradient(ellipse at 15% 0,rgba(168,85,247,.28),transparent 50%) fixed,radial-gradient(ellipse at 95% 100%,rgba(34,211,238,.2),transparent 55%) fixed}
+body{margin:0;color:var(--tx);font:500 15px/1.4 Rajdhani,system-ui,sans-serif;background:var(--bg) radial-gradient(ellipse at 15% 0,rgba(168,85,247,.26),transparent 50%) fixed,radial-gradient(ellipse at 95% 100%,rgba(34,211,238,.2),transparent 55%) fixed}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#0a0e22}
-body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7;background-size:340px 340px;background-image:radial-gradient(1px 1px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 78% 14%,#9be7ff,transparent),radial-gradient(1.5px 1.5px at 46% 68%,#fff,transparent),radial-gradient(1px 1px at 88% 82%,#fff,transparent),radial-gradient(1px 1px at 30% 90%,#d8b4fe,transparent);animation:tw 6s linear infinite alternate}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.65;background-size:340px 340px;background-image:radial-gradient(1px 1px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 78% 14%,#9be7ff,transparent),radial-gradient(1.5px 1.5px at 46% 68%,#fff,transparent),radial-gradient(1px 1px at 88% 82%,#fff,transparent),radial-gradient(1px 1px at 30% 90%,#d8b4fe,transparent);animation:tw 7s linear infinite alternate}
 @keyframes tw{to{opacity:.3;background-position:40px 20px}}
 header,main{position:relative;z-index:1}
-header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;background:rgba(8,12,30,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:0 0 24px rgba(34,211,238,.15)}
-h1{font:800 16px Orbitron,sans-serif;margin:0;letter-spacing:.12em;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.pill{font:600 11px Orbitron,sans-serif;padding:3px 9px;border-radius:99px;border:1px solid var(--ok);color:var(--ok)}.pill.l{border-color:var(--ac2);color:var(--ac2)}
-#clk{font:600 12px Orbitron,sans-serif;color:var(--mu)}nav{display:flex;gap:4px;overflow-x:auto;flex:1}
-button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--ln);background:rgba(34,211,238,.06);color:var(--tx);border-radius:10px;padding:7px 12px;transition:.15s}
-button:hover{box-shadow:0 0 14px rgba(34,211,238,.45);border-color:var(--ac)}button:active{transform:scale(.96)}
-button.on,button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent;color:#04101c;box-shadow:0 0 16px rgba(34,211,238,.5)}
-main{padding:12px;max-width:1150px;margin:auto}
-.g2{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-@media(max-width:760px){.g2,.cols{grid-template-columns:1fr}}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:rgba(8,12,30,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:0 0 24px rgba(34,211,238,.15)}
+h1{font:800 15px Orbitron,sans-serif;margin:0;letter-spacing:.1em;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.pill{font:600 10px Orbitron,sans-serif;padding:3px 9px;border-radius:99px;border:1px solid var(--ok);color:var(--ok);white-space:nowrap}
+.pill.l{border-color:var(--ac2);color:var(--ac2)}.pill.w{border-color:var(--wn);color:var(--wn)}
+#clk{font:600 11px Orbitron,sans-serif;color:var(--mu);white-space:nowrap}
+nav{display:flex;gap:5px;overflow-x:auto;flex:1;padding:2px 0}
+button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--ln);background:rgba(34,211,238,.07);color:var(--tx);border-radius:10px;padding:7px 11px;transition:.15s;white-space:nowrap}
+button:hover{box-shadow:0 0 12px rgba(34,211,238,.4);border-color:var(--ac)}button:active{transform:scale(.97)}
+button.on,button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent;color:#04101c;box-shadow:0 0 14px rgba(34,211,238,.45)}
+button.ok{border-color:var(--ok);color:var(--ok);background:rgba(74,222,128,.1)}
+button.wr{border-color:var(--wr);color:var(--wr);background:rgba(255,77,109,.1)}
+button.sm{padding:4px 8px;font-size:13px;border-radius:8px}
+button:disabled{opacity:.45;cursor:not-allowed}
+main{padding:12px;max-width:1240px;margin:auto}
+.g2{display:grid;grid-template-columns:1.25fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:820px){.g2,.g3,.cols{grid-template-columns:1fr}}
 .card{position:relative;background:var(--sf);backdrop-filter:blur(10px);border:1px solid var(--ln);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 0 28px rgba(168,85,247,.1),inset 0 0 22px rgba(34,211,238,.05)}
 .card::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--ac),var(--ac2),transparent)}
-.card>b:first-child{font:600 12px Orbitron,sans-serif;letter-spacing:.1em;color:var(--ac);text-transform:uppercase}
-.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px;margin-top:8px}
-.menu button{text-align:left;padding:11px}.menu small{display:block;color:var(--mu)}
+.card>b:first-child,.ttl{font:600 12px Orbitron,sans-serif;letter-spacing:.1em;color:var(--ac);text-transform:uppercase;display:inline-block}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px}
+.menu button{text-align:left;padding:10px;white-space:normal;position:relative}
+.menu button.oos{opacity:.45;border-color:var(--wr)}.menu small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(125,139,176,.18)}
-.tbs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-input,select,textarea{font:inherit;color:var(--tx);background:rgba(5,8,22,.7);border:1px solid var(--ln);border-radius:10px;padding:8px;width:100%;outline:none}input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 10px rgba(34,211,238,.4)}
-.k{border-left:4px solid var(--ac);background:rgba(5,8,22,.6);padding:9px;margin:7px 0;border-radius:8px;cursor:pointer}.c1 .k{border-color:var(--ac2)}.c2 .k{border-color:var(--ok)}
-.tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--ln)}.low{color:var(--wr);border-color:var(--wr)}
+.tbs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+input,select,textarea{font:inherit;color:var(--tx);background:rgba(5,8,22,.78);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;width:100%;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 10px rgba(34,211,238,.38)}
+.k{border-left:4px solid var(--ac);background:rgba(5,8,22,.65);padding:10px;margin:7px 0;border-radius:8px;cursor:pointer}.c1 .k{border-color:var(--ac2)}.c2 .k{border-color:var(--ok)}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--ln);display:inline-block}
+.low{color:var(--wr);border-color:var(--wr)}.okt{color:var(--ok);border-color:var(--ok)}.wnt{color:var(--wn);border-color:var(--wn)}
 .bar{display:flex;align-items:flex-end;gap:4px;height:100px}.bar i{flex:1;background:linear-gradient(0deg,var(--ac2),var(--ac));border-radius:4px 4px 0 0;min-height:2px;box-shadow:0 0 8px rgba(34,211,238,.5)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats b{display:block;font:800 22px Orbitron,sans-serif;color:var(--tx)}
-.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}td,th{padding:7px;text-align:left;border-bottom:1px solid rgba(125,139,176,.18)}th{color:var(--mu);font-weight:600}
-#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04101c;font-weight:700;padding:9px 16px;border-radius:99px;display:none;z-index:40}
-a{color:var(--ac)}.mu{color:var(--mu)}#rcp{display:none}
-@page{margin:2mm}@media print{body>*:not(#rcp){display:none!important}body::before,body::after{display:none}#rcp{display:block;white-space:pre;font:12px/1.3 monospace;color:#000;background:#fff;width:72mm}}
-</style></head><body>
-<header><h1>◢ DINELOOP</h1><span class="pill" id="st"></span><span id="clk"></span><nav id="nav"></nav><button onclick="rst()">Reset</button></header>
-<main id="v"></main><div id="toast"></div><div id="rcp"></div>
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.stats .card{margin-bottom:0}.stats b{display:block;font:800 21px Orbitron,sans-serif;color:var(--tx);margin-top:4px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}td,th{padding:7px;text-align:left;border-bottom:1px solid rgba(125,139,176,.18)}th{color:var(--mu);font-weight:600;font-size:13px}
+.mdl-bg{position:fixed;inset:0;background:rgba(3,5,14,.82);backdrop-filter:blur(6px);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+.mdl{background:#0b1026;border:1px solid var(--ac);border-radius:16px;padding:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 0 40px rgba(34,211,238,.25)}
+.qr-box{background:#fff;padding:12px;border-radius:12px;display:inline-block;margin:10px auto;text-align:center}
+.qr-box img,.qr-box svg{display:block;margin:auto;max-width:220px;height:auto}
+.w-bar{position:sticky;bottom:8px;background:rgba(8,12,30,.96);border:1px solid var(--ac);border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;box-shadow:0 0 24px rgba(34,211,238,.3);z-index:15}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04101c;font-weight:700;padding:9px 16px;border-radius:99px;display:none;z-index:70}
+a{color:var(--ac)}.mu{color:var(--mu);font-size:13px}#rcp{display:none}
+@page{margin:2mm}
+@media print{
+  body>*:not(#rcp){display:none!important}
+  body::before,body::after{display:none}
+  #rcp{display:block;white-space:pre-wrap;font:12px/1.3 monospace;color:#000;background:#fff;width:72mm;padding:2mm}
+  #rcp .rqr{text-align:center;margin-top:6px}#rcp .rqr svg,#rcp .rqr img{width:130px;height:130px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="brand">◢ DINELOOP</h1>
+  <span class="pill" id="st"></span>
+  <span id="roleChip" class="pill w" style="cursor:pointer;display:none" onclick="openPinSwitch()"></span>
+  <span id="clk"></span>
+  <nav id="nav"></nav>
+  <button class="sm" id="btnOut" style="display:none" onclick="doLogout()">Logout</button>
+</header>
+<main id="v"></main>
+<div id="mdlHost"></div>
+<div id="toast"></div>
+<div id="rcp"></div>
+
 <script>
-const CFG={url:"https://edgklbjmkewdokvptksx.supabase.co",key:"sb_publishable_3Vjm7jhwAKDP9d5BFhaUvA_qOBXKqWc",outlet:"main"}; // fill url + key after Supabase setup (see SETUP.md)
-const $=s=>document.querySelector(s),R=n=>Math.round(n*100)/100,TB=["T1","T2","T3","T4","T5","T6","T7","Takeaway"];
-function seed(){return{menu:[{id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0},{id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0}],stock:[],cust:{},bills:[],kots:[],open:{},kn:0}}
-let S;try{S=JSON.parse(localStorage.getItem("dl2")||"null")}catch(e){}S=S||seed();
-let sb=null,user=null,tmr,tab="bill",tb="T1",q="",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed",msg="Hi {name}, we miss you at DineLoop! Show this message for a free dessert on your next visit.";
-function save(){try{localStorage.setItem("dl2",JSON.stringify(S))}catch(e){}if(sb&&user){clearTimeout(tmr);tmr=setTimeout(()=>{S._r=Math.random();sb.from("app_state").upsert({id:CFG.outlet,data:S}).then(r=>r.error&&toast("Sync failed"))},400)}}
-async function boot(){if(!sb&&CFG.url&&window.supabase)sb=supabase.createClient(CFG.url,CFG.key);
-if(sb&&!user){const g=await sb.auth.getSession();user=g.data.session&&g.data.session.user;if(!user)return login();
-const r=await sb.from("app_state").select("data").eq("id",CFG.outlet).maybeSingle();if(r.data&&r.data.data)S=r.data.data;else save();
-sb.channel("dl").on("postgres_changes",{event:"*",schema:"public",table:"app_state"},p=>{const n=p.new&&p.new.data;if(n&&n._r!==S._r&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){S=n;render()}}).subscribe()}
-render()}
-function login(){$("#v").innerHTML=`<div class="card" style="max-width:360px;margin:40px auto"><b>Crew login</b><input id="em" placeholder="Email" style="margin:10px 0"><input id="pw" type="password" placeholder="Password"><button class="pri" style="margin-top:10px" onclick="doLogin()">Enter the deck</button></div>`}
-async function doLogin(){const r=await sb.auth.signInWithPassword({email:$("#em").value,password:$("#pw").value});if(r.error)return toast(r.error.message);user=r.data.user;boot()}
-const M=id=>S.menu.find(x=>x.id==id),seg=c=>(Date.now()-c.last)/864e5>=LD?"Lanes":c.visits>=3?"Regular":"New";
-function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2400)}
+const CFG={url:"https://edgklbjmkewdokvptksx.supabase.co",key:"sb_publishable_3Vjm7jhwAKDP9d5BFhaUvA_qOBXKqWc",outlet:"main"};
+const $=s=>document.querySelector(s),R=n=>Math.round((+n||0)*100)/100;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TB=["T1","T2","T3","T4","T5","T6","T7","T8","Counter","Takeaway"];
+
+function defaultCfg(){
+  return{
+    rName:"DINELOOP",tag:"Spaceship POS & Loyalty",addr:"",phone:"",gstin:"",fssai:"",
+    taxPct:5,taxInc:false,invPrefix:"DL-",invNext:1,
+    svcPct:0,pkgFee:0,delFee:0,
+    upiId:"",upiName:"",bankInfo:"",staticQr:"",
+    waiterCanPay:true,ptsPer10:1,redeemPts:100,redeemVal:50,
+    openCash:0,mgrPin:"1234",coupons:[],staffPins:[]
+  };
+}
+function seed(){
+  return{
+    menu:[
+      {id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0,g:null,v:[],a:[],oos:false},
+      {id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0,g:null,v:[],a:[],oos:false}
+    ],
+    stock:[],cust:{},bills:[],kots:[],open:{},openMeta:{},kn:0,cfg:defaultCfg()
+  };
+}
+function normState(x){
+  const d=seed(),s=(x&&typeof x==="object")?x:{};
+  s.menu=Array.isArray(s.menu)?s.menu.map((m,i)=>({id:m.id??i,n:m.n||"Dish",p:+m.p||0,c:m.c||"Mains",s:m.s||"",u:+m.u||0,g:m.g===0||m.g>0?+m.g:null,v:Array.isArray(m.v)?m.v:[],a:Array.isArray(m.a)?m.a:[],oos:!!m.oos})):d.menu;
+  s.stock=Array.isArray(s.stock)?s.stock:[];
+  s.cust=(s.cust&&typeof s.cust==="object")?s.cust:{};
+  s.bills=Array.isArray(s.bills)?s.bills:[];
+  s.kots=Array.isArray(s.kots)?s.kots:[];
+  s.open=(s.open&&typeof s.open==="object")?s.open:{};
+  s.openMeta=(s.openMeta&&typeof s.openMeta==="object")?s.openMeta:{};
+  s.kn=+s.kn||0;
+  s.cfg=Object.assign(defaultCfg(),s.cfg||{});
+  if(!Array.isArray(s.cfg.coupons))s.cfg.coupons=[];
+  if(!Array.isArray(s.cfg.staffPins))s.cfg.staffPins=[];
+  return s;
+}
+
+let S=normState(null);
+try{const ls=JSON.parse(localStorage.getItem("dl2")||"null");if(ls)S=normState(ls);}catch(e){}
+
+let sb=null,user=null,tmr=null,rtCh=null;
+let myRole="admin",trueRole="admin",activeName="Owner",activeOutlet=CFG.outlet;
+let restList=[],roleList=[],restInfo=null;
+let tab="bill",tb="T1",q="",cat="All",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed";
+let msg="Hi {name}, we miss you at {rName}! Show this message for a special treat on your next visit.";
+let wCat="All",wQ="",ocrRows=[],ocrBusy=false,aiAns="",aiBusy=false;
+
+function save(){
+  try{localStorage.setItem("dl2_"+activeOutlet,JSON.stringify(S));if(activeOutlet===CFG.outlet)localStorage.setItem("dl2",JSON.stringify(S));}catch(e){}
+  if(sb&&user){
+    clearTimeout(tmr);
+    tmr=setTimeout(()=>{
+      S._r=Math.random();
+      sb.from("app_state").upsert({id:activeOutlet,data:S}).then(r=>r.error&&toast("Sync failed: "+r.error.message));
+    },380);
+  }
+}
+
+async function loadOutletState(outletId){
+  activeOutlet=outletId;
+  let loaded=null;
+  if(sb&&user){
+    const r=await sb.from("app_state").select("data").eq("id",outletId).maybeSingle();
+    if(r.error){toast("Load error: "+r.error.message);}
+    if(r.data&&r.data.data)loaded=r.data.data;
+  }
+  if(!loaded){
+    try{loaded=JSON.parse(localStorage.getItem("dl2_"+outletId)||"null");}catch(e){}
+  }
+  S=normState(loaded);
+  if(sb&&user&&!loaded)save();
+  subRealtime();
+}
+
+function subRealtime(){
+  if(!sb||!user)return;
+  if(rtCh){try{sb.removeChannel(rtCh)}catch(e){}}
+  rtCh=sb.channel("dl-"+activeOutlet)
+    .on("postgres_changes",{event:"*",schema:"public",table:"app_state",filter:"id=eq."+activeOutlet},p=>{
+      const n=p.new&&p.new.data;
+      if(n&&n._r!==S._r&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"")){
+        S=normState(n);render();
+      }
+    }).subscribe();
+}
+
+async function boot(){
+  if(!sb&&CFG.url&&window.supabase)sb=supabase.createClient(CFG.url,CFG.key);
+  if(sb&&!user){
+    const g=await sb.auth.getSession();
+    user=g.data.session&&g.data.session.user;
+    if(!user)return login();
+    // Load SaaS role & restaurant context (gracefully handles pre-02_saas_roles.sql too)
+    const rr=await sb.from("user_roles").select("*").eq("user_id",user.id).maybeSingle();
+    if(!rr.error&&rr.data){
+      if(!rr.data.active)return blockedScreen("Your staff account is disabled. Contact your Restaurant Admin.");
+      trueRole=rr.data.role;myRole=rr.data.role;
+      activeName=rr.data.display_name||user.email.split("@")[0];
+      activeOutlet=rr.data.restaurant_id||CFG.outlet;
+    }else if(!rr.error&&!rr.data){
+      // Table exists, check if user has no role row
+      const cnt=await sb.from("user_roles").select("user_id",{count:"exact",head:true});
+      if(!cnt.error&&(cnt.count||0)>0){
+        return blockedScreen("No restaurant role assigned to "+user.email+". Ask Platform Owner or Admin to assign your email.");
+      }
+    }
+    await loadSaasLists();
+    if(restInfo&&restInfo.active===false&&trueRole!=="superadmin"){
+      return blockedScreen("Subscription paused for "+restInfo.name+". Please contact DineLoop Support.");
+    }
+    await loadOutletState(activeOutlet);
+    if(myRole==="waiter")tab="waiter";
+    else if(myRole==="kitchen")tab="kds";
+    else tab="bill";
+  }
+  render();
+}
+
+async function loadSaasLists(){
+  if(!sb||!user)return;
+  const r1=await sb.from("restaurants").select("*").order("created_at",{ascending:true});
+  if(!r1.error&&r1.data){
+    restList=r1.data;
+    restInfo=restList.find(x=>x.id===activeOutlet)||null;
+  }
+  const r2=await sb.from("user_roles").select("*").order("created_at",{ascending:true});
+  if(!r2.error&&r2.data)roleList=r2.data;
+}
+
+function blockedScreen(msgText){
+  $("#nav").innerHTML="";$("#btnOut").style.display="inline-block";
+  $("#v").innerHTML=`<div class="card" style="max-width:440px;margin:40px auto;text-align:center"><b>Access Paused</b><p style="margin:14px 0">${esc(msgText)}</p><button class="pri" onclick="doLogout()">Sign out</button></div>`;
+}
+
+function login(){
+  $("#nav").innerHTML="";$("#roleChip").style.display="none";$("#btnOut").style.display="none";
+  $("#st").textContent="AUTH REQUIRED";$("#st").className="pill l";
+  $("#v").innerHTML=`<div class="card" style="max-width:380px;margin:40px auto">
+    <b>Crew Login</b>
+    <p class="mu">Sign in with your DineLoop staff email & password</p>
+    <input id="em" placeholder="Email" autocomplete="username" style="margin:8px 0">
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="pri" style="margin-top:12px;width:100%" onclick="doLogin()">Enter Command Deck</button>
+  </div>`;
+}
+
+async function doLogin(){
+  const r=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  if(r.error)return toast(r.error.message);
+  user=r.data.user;boot();
+}
+async function doLogout(){
+  if(sb)await sb.auth.signOut();
+  user=null;trueRole="admin";myRole="admin";location.reload();
+}
+
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display="none",2600)}
 setInterval(()=>{$("#clk").textContent=new Date().toLocaleTimeString("en-IN")},1000);
-const TABS=[["bill","◉ Billing"],["kds","◈ Galley"],["stock","▣ Cargo"],["cust","✦ Loyalty"],["rep","◭ Reports"]];
+
+const ROLE_TABS={
+  superadmin:[["bill","◉ Billing"],["waiter","⌖ Waiter"],["kds","◈ Galley"],["menu","☰ Menu"],["stock","▣ Cargo"],["cust","✦ Loyalty"],["rep","◭ Reports"],["cfg","⚙ Settings"],["saas","⌘ SaaS"]],
+  admin:[["bill","◉ Billing"],["waiter","⌖ Waiter"],["kds","◈ Galley"],["menu","☰ Menu"],["stock","▣ Cargo"],["cust","✦ Loyalty"],["rep","◭ Reports"],["cfg","⚙ Settings"]],
+  manager:[["bill","◉ Billing"],["waiter","⌖ Waiter"],["kds","◈ Galley"],["menu","☰ Menu"],["stock","▣ Cargo"],["cust","✦ Loyalty"],["rep","◭ Reports"]],
+  cashier:[["bill","◉ Billing"],["kds","◈ Galley"],["cust","✦ Loyalty"],["rep","◭ Reports"]],
+  waiter:[["waiter","⌖ Waiter Order"]],
+  kitchen:[["kds","◈ Galley KDS"]]
+};
+function allowedTabs(){return ROLE_TABS[myRole]||ROLE_TABS.admin}
 function go(k){tab=k;render()}
-function render(){$("#st").textContent=sb?"CLOUD SYNC":"LOCAL MODE";$("#st").className="pill"+(sb?"":" l");
-$("#nav").innerHTML=TABS.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
-$("#v").innerHTML=({bill:vBill,kds:vKds,stock:vStock,cust:vCust,rep:vRep})[tab]();if(tab=="bill"){grid();cart()}}
-function rst(){if(confirm("Reset all data?")){S=seed();save();render()}}
-function pt(t){$("#rcp").textContent=t;window.print()}
-const L=(a,b)=>a.padEnd(24)+b.padStart(8);
-function bt(b){return["DINELOOP","Bill #"+b.no+"  "+new Date(b.t).toLocaleString("en-IN"),"Table: "+b.table,"-".repeat(32),...b.items.map(i=>L(i.n.slice(0,17)+" x"+i.q,"₹"+i.p*i.q)),"-".repeat(32),L("Subtotal","₹"+b.sub),...(b.disc?[L("Loyalty","-₹"+b.disc)]:[]),L("TOTAL","₹"+b.tot),"Paid by "+b.pay,"","Thank you! Visit again"].join("\n")}
-function prn(){if(lastB)pt(bt(lastB))}
-async function sendWA(to,t){if(sb){const r=await sb.functions.invoke("send-wa",{body:{to:"91"+to,text:t.replace(/\s+/g," ")}});toast(r.error?"WhatsApp send failed":"Sent on WhatsApp")}else window.open("https://wa.me/91"+to+"?text="+encodeURIComponent(t),"_blank")}
-const wt=p=>msg.replace("{name}",S.cust[p].name);
-function vBill(){return `<div class="g2"><div class="card"><b>Menu</b><input placeholder="Search dish…" style="margin-top:8px" value="${q}" oninput="q=this.value;grid()"><div class="menu" id="grid"></div></div>
-<div class="card"><b>Order</b><div class="tbs" style="margin-top:8px">${TB.map(t=>`<button class="${t==tb?"on":""}" onclick="tb='${t}';render()">${t}${(S.open[t]||[]).length?" •":""}</button>`).join("")}</div><div id="cart"></div>
-<div style="margin-top:10px"><input placeholder="Guest mobile (10 digits) for loyalty" inputmode="numeric" maxlength="10" value="${ph}" oninput="ph=this.value.replace(/\\D/g,'');cart()">
-<input placeholder="Guest name" style="margin:6px 0" value="${nmv}" oninput="nmv=this.value"><label><input type="checkbox" style="width:auto" ${op?"checked":""} onchange="op=this.checked"> Guest agrees to WhatsApp messages</label><br><label><input type="checkbox" style="width:auto" ${ap?"checked":""} onchange="ap=this.checked"> Auto-print KOT</label></div></div></div>`}
-function grid(){$("#grid").innerHTML=S.menu.filter(m=>m.n.toLowerCase().includes(q.toLowerCase())).map(m=>`<button onclick="add(${m.id})">${m.n}<small>₹${m.p} · ${m.c}</small></button>`).join("")}
-function add(id){const o=S.open[tb]=S.open[tb]||[],l=o.find(x=>x.id==id);l?l.q++:o.push({id,q:1,sent:0});cart();save()}
-function chg(id,d){const o=S.open[tb],l=o.find(x=>x.id==id);l.q+=d;if(l.q<=0)o.splice(o.indexOf(l),1);cart();save()}
-function calc(){const o=S.open[tb]||[],sub=o.reduce((a,l)=>a+M(l.id).p*l.q,0),c=S.cust[ph],disc=rd&&c&&c.pts>=100?Math.min(50,sub):0,tax=R((sub-disc)*.05),raw=sub-disc+tax,tot=Math.round(raw);return{o,sub,disc,tax,ro:R(tot-raw),tot,c}}
-function cart(){const c=calc(),cu=c.c;if(!cu)rd=false;
-$("#cart").innerHTML=(c.o.length?c.o.map(l=>`<div class="row"><span>${M(l.id).n}</span><span><button onclick="chg(${l.id},-1)">−</button> ${l.q} <button onclick="chg(${l.id},1)">+</button></span><b>₹${M(l.id).p*l.q}</b></div>`).join(""):`<p class="mu">No items on ${tb}. Tap a dish to add.</p>`)
-+(cu?`<p>${cu.name}: <b>${cu.pts}</b> pts · ${cu.visits} visits ${cu.pts>=100?`<label><input type="checkbox" style="width:auto" ${rd?"checked":""} onchange="rd=this.checked;cart()"> Redeem 100 pts = ₹50</label>`:""}</p>`:"")
-+`<div class="row"><span>Subtotal</span><span>₹${R(c.sub)}</span></div>`+(c.disc?`<div class="row"><span>Loyalty discount</span><span>−₹${c.disc}</span></div>`:"")
-+`<div class="row"><span>CGST 2.5% + SGST 2.5%</span><span>₹${c.tax}</span></div><div class="row"><span>Round off</span><span>${c.ro}</span></div><div class="row"><b>Total</b><b>₹${c.tot}</b></div>
-<div class="tbs" style="margin-top:8px"><button onclick="kot()">Send KOT</button><button class="pri" onclick="pay('Cash')">Cash</button><button class="pri" onclick="pay('UPI')">UPI</button><button class="pri" onclick="pay('Card')">Card</button></div>${link}`}
-function kot(q2){const o=S.open[tb]||[],it=o.filter(l=>l.q>l.sent).map(l=>({n:M(l.id).n,q:l.q-l.sent}));if(!it.length){if(!q2)toast("Nothing new to send");return}
-const k={id:++S.kn,table:tb,items:it,st:0,t:Date.now()};S.kots.push(k);o.forEach(l=>l.sent=l.q);if(!q2)toast("KOT sent to kitchen");save();cart();if(ap)pt(["KOT "+k.id+"  "+k.table,"-".repeat(32),...it.map(x=>x.q+" x "+x.n)].join("\n"))}
-function pay(m){const c=calc();if(!c.o.length)return toast("Add items first");kot(1);const P=ph,ok=P.length==10;let u,t="";
-if(ok){u=S.cust[P]=S.cust[P]||{name:"",pts:0,visits:0,last:0,spent:0,opt:0};u.name=nmv||u.name||"Guest";u.pts+=Math.floor(c.tot/10)-(c.disc?100:0);u.visits++;u.last=Date.now();u.spent+=c.tot;if(op)u.opt=1;
-t=`Thanks for dining with DineLoop! Bill ₹${c.tot} paid by ${m}. You earned ${Math.floor(c.tot/10)} points, balance ${u.pts}.`}
-c.o.forEach(l=>{const it=M(l.id),s=S.stock.find(x=>x.n==it.s);if(s)s.q=R(Math.max(0,s.q-it.u*l.q))});
-lastB={no:S.bills.length+1,t:Date.now(),table:tb,items:c.o.map(l=>({n:M(l.id).n,q:l.q,p:M(l.id).p})),sub:c.sub,disc:c.disc,tot:c.tot,pay:m,ph:ok?P:""};S.bills.push(lastB);
-S.open[tb]=[];rd=false;link=`<div class="tbs"><button onclick="prn()">Print bill</button></div>`;ph="";nmv="";op=false;save();toast("Paid ₹"+c.tot);render();if(ok&&u.opt)sendWA(P,t)}
-function vKds(){const N=["New","Cooking","Ready"];return `<div class="cols">${N.map((n,i)=>`<div class="card c${i}"><b>${n}</b>${S.kots.filter(k=>k.st==i).map(k=>`<div class="k" onclick="adv(${k.id})"><b>KOT ${k.id} · ${k.table}</b> <span class="mu">${Math.max(0,Math.round((Date.now()-k.t)/6e4))}m</span>${k.items.map(x=>`<div>${x.q}× ${x.n}</div>`).join("")}</div>`).join("")||`<p class="mu">All clear</p>`}</div>`).join("")}</div><p class="mu">Tap a ticket to move it forward. Tap on Ready to clear.</p>`}
-function adv(id){const k=S.kots.find(x=>x.id==id);k.st++;if(k.st>2)S.kots.splice(S.kots.indexOf(k),1);save();render()}
-function vStock(){return `<div class="card tw"><b>Cargo hold</b><table><tr><th>Item</th><th>In stock</th><th>Min</th><th></th><th></th></tr>${S.stock.map((s,i)=>`<tr><td>${s.n}</td><td>${s.q} ${s.u}</td><td>${s.min}</td><td>${s.q<=s.min?`<span class="tag low">Low</span>`:`<span class="tag">OK</span>`}</td><td><button onclick="S.stock[${i}].q+=5;save();render()">+5</button></td></tr>`).join("")}</table><p class="mu">Stock is deducted automatically when a bill is paid.</p></div>`}
-function vCust(){const A=Object.entries(S.cust).sort((a,b)=>b[1].spent-a[1].spent),T=A.filter(([p,c])=>c.opt&&(sg=="All"||seg(c)==sg||(sg=="Lapsed"&&seg(c)=="Lanes")));
-return `<div class="card tw"><b>Guests (${A.length})</b><table><tr><th>Name</th><th>Mobile</th><th>Points</th><th>Visits</th><th>Segment</th></tr>${A.map(([p,c])=>`<tr><td>${c.name}</td><td>${p}</td><td>${c.pts}</td><td>${c.visits}</td><td><span class="tag">${seg(c)=="Lanes"?"Lapsed":seg(c)}</span></td></tr>`).join("")}</table><p class="mu">1 point per ₹10 spent.</p></div>
-<div class="card"><b>WhatsApp campaign</b><div class="g2" style="margin-top:8px"><select onchange="sg=this.value;render()">${["All","New","Regular","Lapsed"].map(x=>`<option ${x==sg?"selected":""}>${x}</option>`).join("")}</select><input type="number" min="1" value="${LD}" onchange="LD=+this.value||14;render()" title="Lapsed after N days"></div>
-<textarea rows="3" style="margin-top:8px" onchange="msg=this.value;render()">${msg}</textarea>
-${sb&&T.length?`<button class="pri" style="margin:8px 0" onclick="T_all()">Send to all (${T.length})</button>`:""}
-${T.map(([p,c])=>`<div class="row"><span>${c.name} · ${p}</span><button onclick="sendWA('${p}',wt('${p}'))">Send</button></div>`).join("")||`<p class="mu">No opted-in guests in this segment.</p>`}<p class="mu">Only guests who agreed to messages are listed.</p></div>`}
-function T_all(){Object.entries(S.cust).filter(([p,c])=>c.opt&&(sg=="All"||seg(c)==sg||(sg=="Lapsed"&&seg(c)=="Lanes"))).forEach(([p],i)=>setTimeout(()=>sendWA(p,wt(p)),i*1200))}
-function vRep(){const td=new Date().toDateString(),B=S.bills.filter(b=>new Date(b.t).toDateString()==td),tot=B.reduce((a,b)=>a+b.tot,0),pay={},it={},hr=Array(12).fill(0);
-B.forEach(b=>{pay[b.pay]=(pay[b.pay]||0)+b.tot;b.items.forEach(i=>it[i.n]=(it[i.n]||0)+i.q);const h=new Date(b.t).getHours()-11;if(h>=0&&h<12)hr[h]+=b.tot});
-const top=Object.entries(it).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...hr),ins=[],low=S.stock.filter(s=>s.q<=s.min),lp=Object.values(S.cust).filter(c=>c.opt&&seg(c)=="Lanes").length;
-if(low.length)ins.push(`Low stock: ${low.map(s=>s.n).join(", ")}. Reorder before the next service.`);if(top[0])ins.push(`${top[0][0]} is today’s best seller. Feature it first on the menu and in offers.`);
-if(B.length)ins.push(`${hr.slice(0,11).indexOf(Math.min(...hr.slice(0,11)))+11}:00 is the slowest hour. Try a time-limited offer then.`);if(lp)ins.push(`${lp} opted-in guests haven’t visited in ${LD}+ days. Send a win-back message from Loyalty.`);
-return `<div class="stats" style="margin-bottom:12px"><div class="card"><span class="mu">Sales today</span><b>₹${tot}</b></div><div class="card"><span class="mu">Bills</span><b>${B.length}</b></div><div class="card"><span class="mu">Avg bill</span><b>₹${B.length?Math.round(tot/B.length):0}</b></div></div>
-<div class="g2"><div class="card"><b>Sales by hour</b><div class="bar" style="margin-top:10px">${hr.map(v=>`<i style="height:${v/mx*100}%" title="₹${v}"></i>`).join("")}</div></div>
-<div class="card"><b>Payments</b>${Object.entries(pay).map(([k,v])=>`<div class="row"><span>${k}</span><span>₹${v}</span></div>`).join("")||`<p class="mu">No bills yet</p>`}</div></div>
-<div class="g2"><div class="card"><b>Top dishes</b>${top.slice(0,5).map(([n,v])=>`<div class="row"><span>${n}</span><span>${v}</span></div>`).join("")||`<p class="mu">No sales yet</p>`}</div>
-<div class="card"><b>Smart insights</b><p class="mu">Rule-based, runs free in your browser.</p>${ins.map(x=>`<p>• ${x}</p>`).join("")||`<p class="mu">Make a few sales to see insights.</p>`}</div></div>`}
+const M=id=>S.menu.find(x=>x.id==id);
+const seg=c=>(Date.now()-(c.last||0))/864e5>=LD?"Lapsed":c.visits>=3?"Regular":"New";
+const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,discType:"",discVal:0,coupon:"",note:""});
+
+function render(){
+  const tabs=allowedTabs();
+  if(!tabs.some(x=>x[0]===tab))tab=tabs[0][0];
+  $("#brand").textContent="◢ "+(S.cfg.rName||"DINELOOP").toUpperCase();
+  $("#st").textContent=sb?("CLOUD SYNC · "+activeOutlet):"LOCAL MODE";
+  $("#st").className="pill"+(sb?"":" l");
+  $("#roleChip").style.display="inline-block";
+  $("#roleChip").textContent=`${activeName} (${myRole.toUpperCase()}) ▾`;
+  $("#btnOut").style.display=sb&&user?"inline-block":"none";
+  $("#nav").innerHTML=tabs.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
+  const views={bill:vBill,waiter:vWaiter,kds:vKds,menu:vMenu,stock:vStock,cust:vCust,rep:vRep,cfg:vCfg,saas:vSaas};
+  $("#v").innerHTML=(views[tab]||vBill)();
+  if(tab==="bill"){grid();cart();}
+  if(tab==="waiter"){wGrid();}
+}
+
+function closeMdl(){$("#mdlHost").innerHTML=""}
+function showMdl(html){$("#mdlHost").innerHTML=`<div class="mdl-bg" onclick="if(event.target===this)closeMdl()"><div class="mdl">${html}</div></div>`}
+
+function requireMgrPin(fn){
+  if(myRole==="superadmin"||myRole==="admin"||myRole==="manager")return fn();
+  showMdl(`<b>Manager PIN Required</b><p class="mu">Enter Manager/Admin PIN to approve this action.</p>
+    <input id="pinIn" type="password" inputmode="numeric" placeholder="PIN (default 1234)" style="margin:8px 0">
+    <div class="tbs"><button class="pri" onclick="verifyMgrPin()">Verify</button><button onclick="closeMdl()">Cancel</button></div>`);
+  window._pinCb=fn;setTimeout(()=>$("#pinIn")?.focus(),50);
+}
+function verifyMgrPin(){
+  if($("#pinIn").value===(S.cfg.mgrPin||"1234")){closeMdl();window._pinCb&&window._pinCb();}
+  else toast("Wrong PIN");
+}
+
+function openPinSwitch(){
+  const pins=S.cfg.staffPins||[];
+  showMdl(`<b>Switch Crew Role / PIN</b>
+    <p class="mu">Current: ${esc(activeName)} (${myRole.toUpperCase()}). ${trueRole==="waiter"||trueRole==="kitchen"?"Enter Manager PIN to elevate.":"Switch view or enter staff PIN:"}</p>
+    <div style="margin:8px 0">
+      <label class="mu">Select Role</label>
+      <select id="swRole">
+        ${["waiter","kitchen","cashier","manager","admin",...(trueRole==="superadmin"?["superadmin"]:[])].map(r=>`<option value="${r}" ${r===myRole?"selected":""}>${r.toUpperCase()}</option>`).join("")}
+      </select>
+    </div>
+    <input id="swPin" type="password" inputmode="numeric" placeholder="PIN (Admin/Manager PIN: ${trueRole==='superadmin'||trueRole==='admin'?'your mgrPin':'required for higher role'})" style="margin-bottom:10px">
+    ${pins.length?`<div class="tbs">${pins.map((p,i)=>`<button class="sm" onclick="quickPin(${i})">${esc(p.name)} (${p.role})</button>`).join("")}</div>`:""}
+    <div class="tbs"><button class="pri" onclick="doPinSwitch()">Switch</button><button onclick="closeMdl()">Close</button></div>`);
+}
+function doPinSwitch(){
+  const r=$("#swRole").value,pin=$("#swPin").value;
+  const rank={kitchen:1,waiter:1,cashier:2,manager:3,admin:4,superadmin:5};
+  if((rank[r]||1)>(rank[trueRole]||1)&&pin!==(S.cfg.mgrPin||"1234"))return toast("Manager PIN required for higher role");
+  myRole=r;closeMdl();render();toast("Switched to "+r.toUpperCase());
+}
+function quickPin(i){
+  const p=S.cfg.staffPins[i];if(!p)return;
+  const entered=prompt("Enter PIN for "+p.name);
+  if(entered===p.pin){myRole=p.role;activeName=p.name;closeMdl();render();toast("Welcome "+p.name);}
+  else if(entered!==null)toast("Wrong PIN");
+}
+
+// ---------- QR CODE HELPER (pure client-side SVG via qrcode-generator) ----------
+function makeQrSvg(text,px=200){
+  if(!text)return"";
+  if(window.qrcode){
+    const qr=qrcode(0,"M");qr.addData(text);qr.make();
+    const n=qr.getModuleCount(),cell=Math.max(3,Math.floor(px/n)),sz=n*cell;
+    let d="";
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))d+=`M${c*cell},${r*cell}h${cell}v${cell}h-${cell}z`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  }
+  return `<div style="padding:12px;color:#000;font-size:12px">QR text: ${esc(text)}</div>`;
+}
+function upiUri(amount,note){
+  const id=(S.cfg.upiId||"").trim();if(!id)return"";
+  const pn=encodeURIComponent(S.cfg.upiName||S.cfg.rName||"DineLoop");
+  const tn=encodeURIComponent(note||"Bill Payment");
+  return `upi://pay?pa=${encodeURIComponent(id)}&pn=${pn}&am=${R(amount).toFixed(2)}&cu=INR&tn=${tn}`;
+}
+function openUpiQr(tableKey,amt,label){
+  const uri=upiUri(amt,(S.cfg.rName||"DineLoop")+" "+tableKey);
+  if(!uri&&!S.cfg.staticQr)return toast("Set your UPI ID or Static QR in Settings first!");
+  showMdl(`<b>Pay via UPI · ${esc(label||tableKey)}</b>
+    <div style="text-align:center;margin:10px 0">
+      <div style="font:800 26px Orbitron,sans-serif;color:var(--ac)">₹${R(amt)}</div>
+      <div class="mu">${esc(S.cfg.upiName||S.cfg.rName)} · ${esc(S.cfg.upiId||"Static QR")}</div>
+      <div class="qr-box">${uri?makeQrSvg(uri,220):`<img src="${S.cfg.staticQr}" alt="UPI QR">`}</div>
+      ${S.cfg.bankInfo?`<div class="mu" style="margin-top:4px">${esc(S.cfg.bankInfo)}</div>`:""}
+    </div>
+    <div class="tbs" style="justify-content:center">
+      ${uri?`<a href="${uri}" style="text-decoration:none"><button class="pri">Open UPI App</button></a>`:""}
+      <button onclick="closeMdl()">Close</button>
+    </div>`);
+}
+
+// ---------- CART & BILL MATH ----------
+function itemUnitPrice(l){
+  const m=M(l.id);if(!m)return 0;
+  let p=+m.p||0;
+  if(l.v&&m.v){const vr=m.v.find(x=>x.n===l.v);if(vr)p=+vr.p||p;}
+  if(Array.isArray(l.add)&&m.a){l.add.forEach(an=>{const ad=m.a.find(x=>x.n===an);if(ad)p+=(+ad.p||0);});}
+  return R(p);
+}
+function itemLabel(l){
+  const m=M(l.id);if(!m)return"";
+  let s=m.n;
+  if(l.v)s+=` (${l.v})`;
+  if(l.add&&l.add.length)s+=` +${l.add.join(",")}`;
+  return s;
+}
+function calc(t=tb){
+  const o=(S.open[t]||[]).filter(l=>M(l.id)),mt=meta(t),c=S.cust[ph];
+  let sub=0,taxSum=0;
+  o.forEach(l=>{
+    const m=M(l.id),up=itemUnitPrice(l),line=up*l.q,rate=(m.g!==null&&m.g!==undefined)?+m.g:+S.cfg.taxPct;
+    if(S.cfg.taxInc){
+      const base=line/(1+rate/100);sub+=base;taxSum+=(line-base);
+    }else{
+      sub+=line;taxSum+=line*(rate/100);
+    }
+  });
+  sub=R(sub);
+  let loyDisc=rd&&c&&c.pts>=(S.cfg.redeemPts||100)?Math.min(S.cfg.redeemVal||50,sub):0;
+  let manDisc=0;
+  if(mt.discType==="pct")manDisc=R(sub*(Math.min(100,+mt.discVal||0)/100));
+  else if(mt.discType==="flat")manDisc=Math.min(sub,+mt.discVal||0);
+  const disc=R(Math.min(sub,loyDisc+manDisc));
+  const discRatio=sub>0?Math.max(0,(sub-disc)/sub):1;
+  const tax=R(taxSum*discRatio),cgst=R(tax/2),sgst=R(tax-cgst);
+  const svc=R((sub-disc)*(+S.cfg.svcPct||0)/100);
+  const pkg=mt.mode==="Parcel"&&o.length?(+S.cfg.pkgFee||0):0;
+  const del=mt.mode==="Delivery"&&o.length?(+S.cfg.delFee||0):0;
+  const raw=sub-disc+tax+svc+pkg+del,tot=Math.round(raw);
+  return{o,mt,sub,loyDisc,manDisc,disc,tax,cgst,sgst,svc,pkg,del,ro:R(tot-raw),tot,c};
+}
+
+function add(id,t=tb){
+  const m=M(id);if(!m)return;
+  if(m.oos)return toast(m.n+" is Out of Stock (86'd)");
+  if((m.v&&m.v.length)||(m.a&&m.a.length))return openItemPicker(id,t);
+  pushLine(id,t,"",[], "");
+}
+function pushLine(id,t,v,adds,note){
+  const o=S.open[t]=S.open[t]||[];
+  const key=v+"|"+adds.join(",")+"|"+(note||"");
+  const l=o.find(x=>x.id==id&&(x.v||"")+"|"+(x.add||[]).join(",")+"|"+(x.note||"")===key);
+  l?l.q++:o.push({id,q:1,sent:0,v:v||"",add:adds,note:note||""});
+  save();if(tab==="bill"){cart();renderTabsOnly();}else if(tab==="waiter"){render();}
+}
+function openItemPicker(id,t){
+  const m=M(id);if(!m)return;
+  showMdl(`<b>${esc(m.n)}</b>
+    ${m.v&&m.v.length?`<div style="margin:10px 0"><div class="mu">Variant</div><div class="tbs">${m.v.map((vr,i)=>`<label class="tag" style="cursor:pointer;padding:6px 10px"><input type="radio" name="pv" value="${esc(vr.n)}" ${i===0?"checked":""} style="width:auto"> ${esc(vr.n)} ₹${vr.p}</label>`).join("")}</div></div>`:""}
+    ${m.a&&m.a.length?`<div style="margin:10px 0"><div class="mu">Add-ons</div><div class="tbs">${m.a.map(ad=>`<label class="tag" style="cursor:pointer;padding:6px 10px"><input type="checkbox" class="pa" value="${esc(ad.n)}" style="width:auto"> ${esc(ad.n)} +₹${ad.p}</label>`).join("")}</div></div>`:""}
+    <input id="pNote" placeholder="Kitchen note (e.g. Less spicy, No onion)" style="margin:8px 0">
+    <div class="tbs"><button class="pri" onclick="confirmPick(${id},'${esc(t)}')">Add to ${esc(t)}</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function confirmPick(id,t){
+  const vEl=document.querySelector('input[name="pv"]:checked');
+  const adds=[...document.querySelectorAll('.pa:checked')].map(x=>x.value);
+  const note=$("#pNote")?.value.trim()||"";
+  closeMdl();pushLine(id,t,vEl?vEl.value:"",adds,note);
+}
+function chg(idx,d,t=tb){
+  const o=S.open[t];if(!o||!o[idx])return;
+  o[idx].q+=d;if(o[idx].q<=0)o.splice(idx,1);
+  save();if(tab==="bill")cart();else render();
+}
+function setNote(idx,t=tb){
+  const o=S.open[t];if(!o||!o[idx])return;
+  const n=prompt("Kitchen note for "+itemLabel(o[idx]),o[idx].note||"");
+  if(n!==null){o[idx].note=n.trim();save();if(tab==="bill")cart();else render();}
+}
+function renderTabsOnly(){
+  const el=$("#tbBar");if(!el)return;
+  el.innerHTML=TB.map(t=>{
+    const cnt=(S.open[t]||[]).reduce((a,l)=>a+l.q,0);
+    const pr=meta(t).prepaid?" ✓":"";
+    return `<button class="${t==tb?"on":""}" onclick="tb='${t}';render()">${t}${cnt?" ("+cnt+")":""}${pr}</button>`;
+  }).join("");
+}
+
+// ---------- BILLING VIEW (RECEPTION / CASHIER / ADMIN) ----------
+function vBill(){
+  const cats=["All",...new Set(S.menu.map(m=>m.c||"Mains"))];
+  const mt=meta(tb);
+  return `<div class="g2">
+    <div class="card">
+      <div class="row" style="border:0;padding:0"><b>Menu</b><span class="mu">F2 Search · F8 KOT · F4 Cash</span></div>
+      <div class="tbs" style="margin-top:8px">${cats.map(c=>`<button class="sm ${cat===c?"on":""}" onclick="cat='${esc(c)}';grid()">${esc(c)}</button>`).join("")}</div>
+      <input id="srch" placeholder="Search dish… (F2)" value="${esc(q)}" oninput="q=this.value;grid()">
+      <div class="menu" id="grid"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="border:0;padding:0"><b>Order · ${esc(tb)}</b>
+        <div class="tbs" style="margin:0">
+          ${["Dine-In","Parcel","Delivery"].map(md=>`<button class="sm ${mt.mode===md?"on":""}" onclick="meta('${esc(tb)}').mode='${md}';save();render()">${md}</button>`).join("")}
+        </div>
+      </div>
+      <div class="tbs" id="tbBar" style="margin-top:8px"></div>
+      <label style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:13px">
+        <input type="checkbox" style="width:auto" ${mt.prepaid?"checked":""} onchange="meta('${esc(tb)}').prepaid=this.checked;save();render()">
+        <span>Prepaid at Reception (mark KOT as Paid)</span>
+      </label>
+      <div id="cart"></div>
+      <div style="margin-top:10px">
+        <input placeholder="Guest mobile (10 digits) for loyalty & WhatsApp" inputmode="numeric" maxlength="10" value="${esc(ph)}" oninput="ph=this.value.replace(/\\D/g,'');cart()">
+        <input placeholder="Guest name" style="margin:6px 0" value="${esc(nmv)}" oninput="nmv=this.value">
+        <div class="tbs">
+          <label style="font-size:13px"><input type="checkbox" style="width:auto" ${op?"checked":""} onchange="op=this.checked"> WhatsApp opt-in</label>
+          <label style="font-size:13px"><input type="checkbox" style="width:auto" ${ap?"checked":""} onchange="ap=this.checked"> Auto-print KOT</label>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function grid(){
+  const el=$("#grid");if(!el)return;
+  renderTabsOnly();
+  el.innerHTML=S.menu
+    .filter(m=>(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
+    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${esc(m.n)}<small>₹${m.p} · ${esc(m.c)}${m.oos?" · 86'd":""}</small></button>`)
+    .join("")||`<p class="mu">No dishes match.</p>`;
+}
+function cart(){
+  const el=$("#cart");if(!el)return;
+  const c=calc(tb),cu=c.c;if(!cu)rd=false;
+  const usual=cu&&Array.isArray(cu.lastOrder)&&cu.lastOrder.length?cu.lastOrder:null;
+  el.innerHTML=(c.o.length?c.o.map((l,i)=>`<div class="row">
+    <span style="flex:1">${esc(itemLabel(l))}${l.note?`<br><small class="mu">📝 ${esc(l.note)}</small>`:""}</span>
+    <span><button class="sm" onclick="setNote(${i})" title="Kitchen note">📝</button> <button class="sm" onclick="chg(${i},-1)">−</button> ${l.q} <button class="sm" onclick="chg(${i},1)">+</button></span>
+    <b>₹${R(itemUnitPrice(l)*l.q)}</b>
+  </div>`).join(""):`<p class="mu">No items on ${esc(tb)}. Tap a dish to add.</p>`)
+  +(cu?`<div class="row" style="background:rgba(34,211,238,.08);padding:6px 8px;border-radius:8px;margin-top:6px">
+      <span>✦ <b>${esc(cu.name)}</b>: ${cu.pts} pts · ${cu.visits} visits</span>
+      <span>
+        ${usual?`<button class="sm ok" onclick="repeatUsual()">+ Repeat Usual</button>`:""}
+        ${cu.pts>=(S.cfg.redeemPts||100)?`<label style="font-size:12px;margin-left:6px"><input type="checkbox" style="width:auto" ${rd?"checked":""} onchange="rd=this.checked;cart()"> Redeem ${S.cfg.redeemPts} pts = ₹${S.cfg.redeemVal}</label>`:""}
+      </span>
+    </div>`:"")
+  +`<div class="row"><span>Subtotal</span><span>₹${R(c.sub)}</span></div>`
+  +(c.loyDisc?`<div class="row"><span>Loyalty discount</span><span>−₹${c.loyDisc}</span></div>`:"")
+  +(c.manDisc?`<div class="row"><span>Discount ${c.mt.coupon?"("+esc(c.mt.coupon)+")":""}</span><span>−₹${c.manDisc}</span></div>`:"")
+  +(c.tax?`<div class="row"><span>CGST + SGST</span><span>₹${c.tax}</span></div>`:"")
+  +(c.svc?`<div class="row"><span>Service Charge (${S.cfg.svcPct}%)</span><span>₹${c.svc}</span></div>`:"")
+  +(c.pkg?`<div class="row"><span>Packaging Charge</span><span>₹${c.pkg}</span></div>`:"")
+  +(c.del?`<div class="row"><span>Delivery Charge</span><span>₹${c.del}</span></div>`:"")
+  +(c.ro?`<div class="row"><span>Round off</span><span>${c.ro}</span></div>`:"")
+  +`<div class="row"><b>Total</b><b style="font-size:18px;color:var(--ac)">₹${c.tot}</b></div>
+  <div class="tbs" style="margin-top:8px">
+    <button onclick="kot()">Send KOT</button>
+    <button class="sm" onclick="openDiscMdl()">Discount / Coupon</button>
+    <button class="sm" onclick="openUpiQr(tb,calc(tb).tot,'Table '+tb)">UPI QR</button>
+    <button class="pri" onclick="pay('Cash')">Cash</button>
+    <button class="pri" onclick="pay('UPI')">UPI</button>
+    <button class="pri" onclick="pay('Card')">Card</button>
+    <button onclick="openSplitMdl()">Split Pay</button>
+  </div>${link}`;
+}
+function repeatUsual(){
+  const cu=S.cust[ph];if(!cu||!cu.lastOrder)return;
+  cu.lastOrder.forEach(x=>{const m=S.menu.find(d=>d.n===x.n&&!d.oos);if(m)for(let i=0;i<(x.q||1);i++)pushLine(m.id,tb,"",[],"");});
+  toast("Added usual order");
+}
+function openDiscMdl(){
+  const mt=meta(tb);
+  showMdl(`<b>Discount / Coupon · ${esc(tb)}</b>
+    <div class="g2" style="margin:10px 0">
+      <select id="dType"><option value="">None</option><option value="pct" ${mt.discType==="pct"?"selected":""}>% Percent</option><option value="flat" ${mt.discType==="flat"?"selected":""}>₹ Flat</option></select>
+      <input id="dVal" type="number" min="0" value="${mt.discVal||0}" placeholder="Value">
+    </div>
+    <input id="dCpn" value="${esc(mt.coupon||"")}" placeholder="Or enter Coupon Code" style="margin-bottom:10px">
+    <div class="tbs"><button class="pri" onclick="applyDisc()">Apply</button><button onclick="clearDisc()">Clear</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function applyDisc(){
+  const code=($("#dCpn").value||"").trim().toUpperCase(),type=$("#dType").value,val=+$("#dVal").value||0;
+  const doSet=()=>{
+    const mt=meta(tb);
+    if(code){
+      const cp=(S.cfg.coupons||[]).find(x=>x.code.toUpperCase()===code);
+      if(!cp)return toast("Invalid coupon code");
+      const sub=calc(tb).sub;if(sub<(cp.min||0))return toast("Min bill ₹"+cp.min+" required");
+      mt.discType=cp.type;mt.discVal=cp.val;mt.coupon=cp.code;
+    }else{mt.discType=type;mt.discVal=val;mt.coupon="";}
+    save();closeMdl();cart();toast("Discount applied");
+  };
+  if(code||val>0)requireMgrPin(doSet);else doSet();
+}
+function clearDisc(){const mt=meta(tb);mt.discType="";mt.discVal=0;mt.coupon="";save();closeMdl();cart();}
+
+function openSplitMdl(){
+  const c=calc(tb);if(!c.o.length)return toast("Add items first");
+  showMdl(`<b>Split Payment · Total ₹${c.tot}</b>
+    <div style="margin:10px 0">
+      <label class="mu">Cash ₹</label><input id="spCash" type="number" min="0" value="${Math.floor(c.tot/2)}" oninput="updSplit(${c.tot})">
+      <label class="mu" style="margin-top:6px;display:block">UPI ₹</label><input id="spUpi" type="number" min="0" value="${c.tot-Math.floor(c.tot/2)}" oninput="updSplit(${c.tot})">
+      <label class="mu" style="margin-top:6px;display:block">Card ₹</label><input id="spCard" type="number" min="0" value="0" oninput="updSplit(${c.tot})">
+      <p id="spSum" class="mu" style="margin-top:8px"></p>
+    </div>
+    <div class="tbs"><button class="pri" onclick="confirmSplit(${c.tot})">Complete Split Pay</button><button onclick="closeMdl()">Cancel</button></div>`);
+  updSplit(c.tot);
+}
+function updSplit(tot){
+  const a=+$("#spCash").value||0,b=+$("#spUpi").value||0,c=+$("#spCard").value||0,rem=tot-(a+b+c);
+  $("#spSum").innerHTML=rem===0?`<span style="color:var(--ok)">Exact match ₹${tot}</span>`:`<span style="color:var(--wr)">Difference: ₹${rem}</span>`;
+}
+function confirmSplit(tot){
+  const a=+$("#spCash").value||0,b=+$("#spUpi").value||0,c=+$("#spCard").value||0;
+  if(a+b+c!==tot)return toast("Split amounts must equal ₹"+tot);
+  const splits={};if(a)splits.Cash=a;if(b)splits.UPI=b;if(c)splits.Card=c;
+  closeMdl();pay("Split",tb,splits);
+}
+
+// ---------- KOT & PAYMENT ----------
+function kot(quiet=false,t=tb){
+  const o=S.open[t]||[],mt=meta(t);
+  const it=o.filter(l=>l.q>l.sent).map(l=>({n:itemLabel(l),q:l.q-l.sent,note:l.note||""}));
+  if(!it.length){if(!quiet)toast("Nothing new to send");return false}
+  const k={id:++S.kn,table:t,mode:mt.mode,prepaid:!!mt.prepaid,by:activeName,items:it,st:0,t:Date.now()};
+  S.kots.push(k);o.forEach(l=>l.sent=l.q);
+  save();if(tab==="bill")cart();else render();
+  if(!quiet)toast("KOT #"+k.id+" sent to kitchen");
+  if(ap){
+    pt(["KOT #"+k.id+"  "+t+" ["+mt.mode+(mt.prepaid?" PAID":"")+"]",new Date(k.t).toLocaleTimeString("en-IN"),"-".repeat(32),...it.map(x=>x.q+" x "+x.n+(x.note?" ("+x.note+")":""))].join("\n"));
+  }
+  return true;
+}
+
+function pay(m,t=tb,splits=null){
+  const c=calc(t);if(!c.o.length)return toast("Add items first");
+  kot(true,t);
+  const P=ph,ok=P.length===10;let u=null,waTxt="";
+  const invNo=(S.cfg.invPrefix||"DL-")+String(S.cfg.invNext||1).padStart(4,"0");
+  S.cfg.invNext=(S.cfg.invNext||1)+1;
+  const billItems=c.o.map(l=>({n:itemLabel(l),q:l.q,p:itemUnitPrice(l)}));
+  if(ok){
+    u=S.cust[P]=S.cust[P]||{name:"",pts:0,visits:0,last:0,spent:0,opt:0};
+    u.name=nmv||u.name||"Guest";
+    const earned=Math.floor(c.tot/10)*(S.cfg.ptsPer10||1);
+    u.pts+=earned-(c.loyDisc?(S.cfg.redeemPts||100):0);
+    u.visits++;u.last=Date.now();u.spent+=c.tot;
+    u.lastOrder=c.o.map(l=>({n:M(l.id).n,q:l.q}));
+    if(op)u.opt=1;
+    waTxt=`Thanks for visiting ${S.cfg.rName}! Bill ${invNo} ₹${c.tot} paid by ${m}. Earned ${earned} pts (Bal: ${u.pts}).`;
+  }
+  c.o.forEach(l=>{const it=M(l.id),s=S.stock.find(x=>x.n===it.s);if(s)s.q=R(Math.max(0,s.q-it.u*l.q));});
+  const payLabel=splits?Object.entries(splits).map(([k,v])=>`${k} ₹${v}`).join(" + "):m;
+  lastB={
+    no:S.bills.length+1,invNo,t:Date.now(),table:t,mode:c.mt.mode,prepaid:!!c.mt.prepaid,
+    items:billItems,sub:c.sub,disc:c.disc,tax:c.tax,cgst:c.cgst,sgst:c.sgst,svc:c.svc,pkg:c.pkg,del:c.del,ro:c.ro,
+    tot:c.tot,pay:m,payLabel,splits,ph:ok?P:"",cashier:activeName
+  };
+  S.bills.push(lastB);
+  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,discType:"",discVal:0,coupon:"",note:""};
+  rd=false;ph="";nmv="";op=false;
+  const waBtn=ok?`<button onclick="sendBillWA('${P}',lastB)">WhatsApp E-Bill</button>`:"";
+  link=`<div class="tbs" style="margin-top:6px"><button class="ok" onclick="prn()">Print Bill (${invNo})</button>${waBtn}</div>`;
+  save();toast("Paid ₹"+c.tot+" ("+invNo+")");render();
+  if(ok&&u&&u.opt)sendWA(P,waTxt);
+}
+
+// ---------- RECEIPT PRINTING + WHATSAPP E-BILL ----------
+const L=(a,b)=>String(a).padEnd(23)+String(b).padStart(9);
+function bt(b){
+  const lines=[
+    (S.cfg.rName||"DINELOOP").toUpperCase(),
+    ...(S.cfg.addr?[S.cfg.addr]:[]),
+    ...(S.cfg.phone?["Ph: "+S.cfg.phone]:[]),
+    ...(S.cfg.gstin?["GSTIN: "+S.cfg.gstin]:[]),
+    "Bill "+(b.invNo||"#"+b.no)+"  "+new Date(b.t).toLocaleString("en-IN"),
+    "Table: "+b.table+" ["+(b.mode||"Dine-In")+"]",
+    "-".repeat(32),
+    ...b.items.map(i=>L(i.n.slice(0,17)+" x"+i.q,"₹"+R(i.p*i.q))),
+    "-".repeat(32),
+    L("Subtotal","₹"+R(b.sub)),
+    ...(b.disc?[L("Discount","-₹"+R(b.disc))]:[]),
+    ...(b.tax?[L("CGST","₹"+R(b.cgst||b.tax/2)),L("SGST","₹"+R(b.sgst||b.tax/2))]:[]),
+    ...(b.svc?[L("Service Chg","₹"+R(b.svc))]:[]),
+    ...(b.pkg?[L("Packaging","₹"+R(b.pkg))]:[]),
+    ...(b.del?[L("Delivery","₹"+R(b.del))]:[]),
+    ...(b.ro?[L("Round off",b.ro)]:[]),
+    L("TOTAL","₹"+b.tot),
+    "Paid: "+(b.payLabel||b.pay)+(b.voided?" [VOIDED]":""),
+    "",
+    "Thank you! Visit again"
+  ];
+  return lines.join("\n");
+}
+function pt(text,qrSvg=""){
+  $("#rcp").innerHTML=esc(text)+(qrSvg?`<div class="rqr">${qrSvg}<div>Scan to Pay ₹${lastB?lastB.tot:""}</div></div>`:"");
+  window.print();
+}
+function prn(b=lastB){
+  if(!b)return;
+  const uri=upiUri(b.tot,b.invNo||"Bill");
+  pt(bt(b),uri?makeQrSvg(uri,130):"");
+}
+function sendBillWA(phone,b){
+  if(!b)return;
+  const txt=`*${S.cfg.rName||"DineLoop"}* E-Bill ${b.invNo||"#"+b.no}%0A`+
+    b.items.map(i=>`${i.q}x ${i.n} = ₹${R(i.p*i.q)}`).join(", ")+
+    ` | Total: ₹${b.tot} (${b.payLabel||b.pay}). Thank you!`;
+  sendWA(phone,decodeURIComponent(txt));
+}
+async function sendWA(to,t){
+  if(!to||to.length!==10)return toast("Need 10-digit mobile");
+  if(sb){
+    const r=await sb.functions.invoke("send-wa",{body:{to:"91"+to,text:t.replace(/\s+/g," ")}});
+    if(r.error){window.open("https://wa.me/91"+to+"?text="+encodeURIComponent(t),"_blank");toast("Opened WhatsApp link");}
+    else toast("Sent on WhatsApp");
+  }else{
+    window.open("https://wa.me/91"+to+"?text="+encodeURIComponent(t),"_blank");
+  }
+}
+
+// ---------- WAITER / CAPTAIN MOBILE VIEW ----------
+function vWaiter(){
+  const cats=["All",...new Set(S.menu.map(m=>m.c||"Mains"))];
+  const c=calc(tb),mt=meta(tb);
+  const unsent=c.o.filter(l=>l.q>l.sent).reduce((a,l)=>a+(l.q-l.sent),0);
+  return `
+  <div class="card">
+    <div class="row" style="border:0;padding:0">
+      <b>⌖ Waiter Order Deck</b>
+      <div class="tbs" style="margin:0">
+        ${["Dine-In","Parcel"].map(md=>`<button class="sm ${mt.mode===md?"on":""}" onclick="meta('${esc(tb)}').mode='${md}';save();render()">${md}</button>`).join("")}
+      </div>
+    </div>
+    <div class="tbs" style="margin-top:8px">
+      ${TB.map(t=>{
+        const tot=calc(t).tot,cnt=(S.open[t]||[]).reduce((a,l)=>a+l.q,0);
+        return `<button class="${t===tb?"on":""}" onclick="tb='${t}';render()">${t}${cnt?` · ₹${tot}`:""}</button>`;
+      }).join("")}
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <b>Tap Dish to Add (${esc(tb)})</b>
+      <div class="tbs" style="margin-top:8px">${cats.map(cx=>`<button class="sm ${wCat===cx?"on":""}" onclick="wCat='${esc(cx)}';wGrid()">${esc(cx)}</button>`).join("")}</div>
+      <input placeholder="Quick search dish…" value="${esc(wQ)}" oninput="wQ=this.value;wGrid()">
+      <div class="menu" id="wGrid"></div>
+    </div>
+    <div class="card">
+      <b>Table ${esc(tb)} Summary</b>
+      ${c.o.length?c.o.map((l,i)=>`<div class="row">
+        <span style="flex:1">${esc(itemLabel(l))} ${l.sent<l.q?`<span class="tag wnt">${l.q-l.sent} new</span>`:`<span class="tag okt">KOT ✓</span>`}${l.note?`<br><small class="mu">${esc(l.note)}</small>`:""}</span>
+        <span><button class="sm" onclick="setNote(${i})">📝</button> <button class="sm" onclick="chg(${i},-1)">−</button> ${l.q} <button class="sm" onclick="chg(${i},1)">+</button></span>
+        <b>₹${R(itemUnitPrice(l)*l.q)}</b>
+      </div>`).join(""):`<p class="mu">No dishes added for ${esc(tb)} yet.</p>`}
+      <div class="row"><b>Table Total (incl. GST)</b><b style="color:var(--ac);font-size:18px">₹${c.tot}</b></div>
+      <div class="tbs" style="margin-top:10px">
+        <button class="pri" onclick="kot(false,tb)">Send to Kitchen (KOT${unsent?" · "+unsent:""})</button>
+        <button class="ok" onclick="openUpiQr(tb,calc(tb).tot,'Table '+tb)">Show Table UPI QR (₹${c.tot})</button>
+        ${S.cfg.waiterCanPay?`<button onclick="pay('Cash',tb)">Hand Cash Paid</button><button onclick="pay('UPI',tb)">UPI Paid</button>`:""}
+      </div>
+    </div>
+  </div>
+  ${c.o.length?`<div class="w-bar">
+    <div><b>${esc(tb)}</b> · ${c.o.reduce((a,l)=>a+l.q,0)} items · <b style="color:var(--ac)">₹${c.tot}</b></div>
+    <div class="tbs" style="margin:0">
+      <button class="sm ok" onclick="openUpiQr(tb,calc(tb).tot,'Table '+tb)">QR ₹${c.tot}</button>
+      <button class="sm pri" onclick="kot(false,tb)">Send KOT</button>
+    </div>
+  </div>`:""}`;
+}
+function wGrid(){
+  const el=$("#wGrid");if(!el)return;
+  el.innerHTML=S.menu
+    .filter(m=>(wCat==="All"||m.c===wCat)&&m.n.toLowerCase().includes(wQ.toLowerCase()))
+    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id},tb)">${esc(m.n)}<small>₹${m.p}${m.oos?" · 86'd":""}</small></button>`)
+    .join("")||`<p class="mu">No dishes</p>`;
+}
+
+// ---------- GALLEY (KDS) ----------
+function vKds(){
+  const N=["New","Cooking","Ready"];
+  return `<div class="cols">${N.map((n,i)=>`<div class="card c${i}"><b>${n}</b>${S.kots.filter(k=>k.st==i).map(k=>`<div class="k" onclick="adv(${k.id})">
+    <div class="row" style="border:0;padding:0"><b>KOT #${k.id} · ${esc(k.table)}</b><span class="tag ${k.prepaid?"okt":""}">${esc(k.mode||"Dine-In")}${k.prepaid?" · PAID":""}</span></div>
+    <div class="mu">${Math.max(0,Math.round((Date.now()-k.t)/6e4))}m ago ${k.by?"· "+esc(k.by):""}</div>
+    ${k.items.map(x=>`<div><b>${x.q}×</b> ${esc(x.n)}${x.note?` <small class="mu">(${esc(x.note)})</small>`:""}</div>`).join("")}
+  </div>`).join("")||`<p class="mu">All clear</p>`}</div>`).join("")}</div>
+  <p class="mu">Tap a ticket to advance (New → Cooking → Ready → Clear).</p>`;
+}
+function adv(id){const k=S.kots.find(x=>x.id==id);if(!k)return;k.st++;if(k.st>2)S.kots.splice(S.kots.indexOf(k),1);save();render();}
+
+// ---------- MENU EDITOR + OCR / PDF / QR SCANNER ----------
+function vMenu(){
+  return `
+  <div class="card">
+    <div class="row" style="border:0;padding:0">
+      <b>Menu Editor (${S.menu.length} items)</b>
+      <div class="tbs" style="margin:0">
+        <button class="pri sm" onclick="openMenuForm()">+ Add Dish</button>
+        <button class="ok sm" onclick="openOcrMdl()">📷 Scan Menu (Photo / PDF / QR)</button>
+        <button class="sm" onclick="dlCsv('menu')">Export CSV</button>
+      </div>
+    </div>
+    <div class="tw" style="margin-top:8px">
+      <table>
+        <tr><th>Dish</th><th>Category</th><th>Price</th><th>GST%</th><th>Stock Link</th><th>Status</th><th>Actions</th></tr>
+        ${S.menu.map(m=>`<tr>
+          <td><b>${esc(m.n)}</b>${m.v&&m.v.length?`<br><small class="mu">${m.v.map(x=>x.n+" ₹"+x.p).join(", ")}</small>`:""}</td>
+          <td>${esc(m.c)}</td>
+          <td>₹${m.p}</td>
+          <td>${m.g!==null&&m.g!==undefined?m.g+"%":S.cfg.taxPct+"% (def)"}</td>
+          <td>${m.s?`${esc(m.s)} (${m.u})`:`<span class="mu">—</span>`}</td>
+          <td><button class="sm ${m.oos?"wr":"ok"}" onclick="toggleOos(${m.id})">${m.oos?"86'd (Out)":"Available"}</button></td>
+          <td><button class="sm" onclick="openMenuForm(${m.id})">Edit</button> <button class="sm wr" onclick="delDish(${m.id})">Del</button></td>
+        </tr>`).join("")}
+      </table>
+    </div>
+  </div>`;
+}
+function toggleOos(id){const m=M(id);if(!m)return;m.oos=!m.oos;save();render();}
+function delDish(id){if(!confirm("Delete this dish?"))return;S.menu=S.menu.filter(x=>x.id!==id);save();render();}
+function openMenuForm(id=null){
+  const m=id!==null?M(id):{id:null,n:"",p:"",c:"Mains",s:"",u:0,g:"",v:[],a:[]};
+  const vStr=(m.v||[]).map(x=>`${x.n}:${x.p}`).join(", ");
+  const aStr=(m.a||[]).map(x=>`${x.n}:${x.p}`).join(", ");
+  showMdl(`<b>${id!==null?"Edit Dish":"Add New Dish"}</b>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <input id="mn" placeholder="Dish Name" value="${esc(m.n)}">
+      <div class="g2">
+        <input id="mp" type="number" min="0" placeholder="Base Price ₹" value="${m.p}">
+        <input id="mc" placeholder="Category (Mains, Starters, Drinks)" value="${esc(m.c)}">
+      </div>
+      <div class="g2">
+        <input id="mg" type="number" min="0" placeholder="Item GST % (blank = outlet default)" value="${m.g===null||m.g===undefined?"":m.g}">
+        <input id="ms" placeholder="Linked Stock Item (exact name)" value="${esc(m.s)}">
+      </div>
+      <input id="mu" type="number" min="0" step="0.01" placeholder="Stock qty deducted per dish sold" value="${m.u||0}">
+      <input id="mv" placeholder="Variants (e.g. Half:80, Full:140)" value="${esc(vStr)}">
+      <input id="ma" placeholder="Add-ons (e.g. Extra Cheese:30, Butter:20)" value="${esc(aStr)}">
+    </div>
+    <div class="tbs"><button class="pri" onclick="saveDish(${id===null?"null":id})">Save Dish</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function parsePairs(str){
+  return (str||"").split(",").map(x=>x.trim()).filter(Boolean).map(x=>{
+    const [n,p]=x.split(":");return{n:(n||"").trim(),p:+p||0};
+  }).filter(x=>x.n);
+}
+function saveDish(id){
+  const n=$("#mn").value.trim(),p=+$("#mp").value||0,c=$("#mc").value.trim()||"Mains",gRaw=$("#mg").value.trim();
+  if(!n)return toast("Dish name required");
+  const obj={
+    id:id!==null?id:S.menu.reduce((mx,x)=>Math.max(mx,x.id),0)+1,
+    n,p,c,s:$("#ms").value.trim(),u:+$("#mu").value||0,
+    g:gRaw===""?null:+gRaw,v:parsePairs($("#mv").value),a:parsePairs($("#ma").value),oos:false
+  };
+  if(id!==null){const idx=S.menu.findIndex(x=>x.id===id);obj.oos=S.menu[idx]?.oos||false;S.menu[idx]=obj;}
+  else S.menu.push(obj);
+  save();closeMdl();render();toast("Dish saved");
+}
+
+// ---------- MENU OCR / PDF / QR SCANNER ----------
+function openOcrMdl(){
+  ocrRows=[];
+  showMdl(`<b>📷 Menu OCR / PDF / QR Scanner</b>
+    <p class="mu">Upload a Menu Photo (JPG/PNG), Menu PDF, or paste menu text/QR link to import dishes automatically.</p>
+    <div style="margin:8px 0;display:grid;gap:8px">
+      <label class="tag" style="padding:10px;cursor:pointer;text-align:center">
+        Upload Menu Photo or PDF
+        <input type="file" id="ocrFile" accept="image/*,.pdf,application/pdf" style="display:none" onchange="handleOcrFile(this)">
+      </label>
+      <div class="tbs">
+        <button class="sm" onclick="scanQrCamera()">📷 Scan Menu QR (Camera)</button>
+        <input id="ocrTxt" placeholder="Or paste menu text / Menu QR URL here…" style="flex:1">
+        <button class="sm pri" onclick="parsePastedMenu()">Parse</button>
+      </div>
+    </div>
+    <div id="ocrOut" class="mu">Waiting for photo, PDF, or text…</div>`);
+}
+
+function smartParseMenuText(raw){
+  const lines=String(raw||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  let curCat="Mains";const out=[];
+  for(const line of lines){
+    // Detect category header (no digits, short)
+    if(!/\d/.test(line)&&line.length>=3&&line.length<=28&&!/^(menu|gst|phone|tel|address)/i.test(line)){
+      curCat=line.replace(/[:\-*#]+/g,"").trim();continue;
+    }
+    const m=line.match(/^(.+?)\s*(?:[-–:|.]+\s*|\s+)(?:rs\.?|inr|₹)?\s*(\d{2,4})(?:\.\d{1,2})?\s*$/i);
+    if(m){
+      const name=m[1].replace(/[.\-–:]+$/,"").trim();
+      const price=+m[2];
+      if(name.length>=2&&price>0&&price<20000)out.push({n:name,p:price,c:curCat,g:S.cfg.taxPct});
+    }
+  }
+  return out;
+}
+
+async function handleOcrFile(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  $("#ocrOut").innerHTML=`<p>Reading <b>${esc(f.name)}</b>…</p>`;
+  if(f.type==="application/pdf"||/\.pdf$/i.test(f.name)){
+    try{
+      const pdfText=await extractPdfText(f);
+      if(pdfText&&pdfText.trim().length>20){
+        const localRows=smartParseMenuText(pdfText);
+        if(sb){
+          const aiRows=await callAiOcr({rawText:pdfText});
+          if(aiRows&&aiRows.length){ocrRows=aiRows;return renderOcrPreview("Extracted from PDF via AI");}
+        }
+        if(localRows.length){ocrRows=localRows;return renderOcrPreview("Extracted from PDF text");}
+      }
+      // Scanned PDF fallback -> send base64 to Gemini
+      const b64=await fileToB64(f);
+      const aiRows=await callAiOcr({fileBase64:b64,mimeType:"application/pdf"});
+      if(aiRows&&aiRows.length){ocrRows=aiRows;return renderOcrPreview("Extracted from Scanned PDF via AI");}
+      $("#ocrOut").innerHTML=`<p class="mu" style="color:var(--wr)">Could not auto-extract scanned PDF. Set GEMINI_API_KEY in Supabase (doc 06) or paste the text above.</p>`;
+    }catch(e){$("#ocrOut").innerHTML=`<p style="color:var(--wr)">PDF read error: ${esc(e.message)}</p>`;}
+  }else{
+    // Image -> compress & call Gemini Vision OCR
+    try{
+      const b64=await compressImgB64(f,1400);
+      const aiRows=await callAiOcr({fileBase64:b64,mimeType:"image/jpeg"});
+      if(aiRows&&aiRows.length){ocrRows=aiRows;return renderOcrPreview("Extracted from Photo via AI");}
+      $("#ocrOut").innerHTML=`<p class="mu" style="color:var(--wr)">Photo OCR needs Gemini AI key in Supabase Edge Function (ai-assistant). You can also paste menu lines like "Paneer Tikka - 240" above!</p>`;
+    }catch(e){$("#ocrOut").innerHTML=`<p style="color:var(--wr)">Image read error: ${esc(e.message)}</p>`;}
+  }
+}
+
+async function callAiOcr(payload){
+  if(!sb)return null;
+  const r=await sb.functions.invoke("ai-assistant",{body:{mode:"ocr",...payload}});
+  if(r.error||!r.data||r.data.fallback||!r.data.text)return null;
+  try{
+    const clean=r.data.text.replace(/```json|```/g,"").trim();
+    const arr=JSON.parse(clean);
+    return Array.isArray(arr)?arr.filter(x=>x&&x.n&&(+x.p>0)):null;
+  }catch(e){return null;}
+}
+
+async function extractPdfText(file){
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{
+      const s=document.createElement("script");
+      s.src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+      s.onload=res;s.onerror=rej;document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  }
+  const buf=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let all="";
+  for(let p=1;p<=Math.min(pdf.numPages,10);p++){
+    const pg=await pdf.getPage(p),tc=await pg.getTextContent();
+    all+=tc.items.map(i=>i.str).join(" ")+"\n";
+  }
+  return all;
+}
+
+function fileToB64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(file);
+  });
+}
+function compressImgB64(file,maxW){
+  return new Promise((res,rej)=>{
+    const img=new Image(),r=new FileReader();
+    r.onload=e=>{
+      img.onload=()=>{
+        const sc=Math.min(1,maxW/Math.max(img.width,img.height));
+        const cv=document.createElement("canvas");cv.width=img.width*sc;cv.height=img.height*sc;
+        cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+        res(cv.toDataURL("image/jpeg",0.84).split(",")[1]);
+      };img.onerror=rej;img.src=e.target.result;
+    };r.onerror=rej;r.readAsDataURL(file);
+  });
+}
+async function scanQrCamera(){
+  if(!("BarcodeDetector" in window))return toast("Camera QR scan works on Chrome Android. Or upload QR photo / paste URL.");
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    const det=new BarcodeDetector({formats:["qr_code"]});
+    $("#ocrOut").innerHTML=`<video id="qrVid" autoplay playsinline style="width:100%;border-radius:10px"></video><p class="mu">Point camera at Menu QR…</p>`;
+    const v=$("#qrVid");v.srcObject=stream;
+    const stop=()=>stream.getTracks().forEach(t=>t.stop());
+    const tick=async()=>{
+      if(!$("#qrVid"))return stop();
+      const codes=await det.detect(v);
+      if(codes.length){stop();$("#ocrTxt").value=codes[0].rawValue;parsePastedMenu();return;}
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }catch(e){toast("Camera blocked: "+e.message);}
+}
+async function parsePastedMenu(){
+  const txt=($("#ocrTxt").value||"").trim();if(!txt)return toast("Paste menu text or URL first");
+  if(/^https?:\/\//i.test(txt)){
+    $("#ocrOut").innerHTML=`<p>Menu URL detected: <a href="${esc(txt)}" target="_blank">${esc(txt)}</a>. Trying AI / fetch…</p>`;
+    try{
+      const resp=await fetch(txt);const html=await resp.text();
+      const plain=html.replace(/<[^>]+>/g,"\n");
+      const rows=smartParseMenuText(plain);
+      if(rows.length){ocrRows=rows;return renderOcrPreview("Imported from Menu URL");}
+    }catch(e){}
+    return $("#ocrOut").innerHTML=`<p class="mu">Browser blocked direct site fetch (CORS). Open <a href="${esc(txt)}" target="_blank">your Menu link</a>, copy/screenshot the menu, and paste text or upload photo here!</p>`;
+  }
+  let rows=smartParseMenuText(txt);
+  if(!rows.length&&sb){rows=await callAiOcr({rawText:txt})||[];}
+  if(!rows.length)return toast("Could not find 'Dish Price' lines. Example: Masala Dosa 120");
+  ocrRows=rows;renderOcrPreview("Parsed "+rows.length+" dishes");
+}
+function renderOcrPreview(title){
+  $("#ocrOut").innerHTML=`<p style="color:var(--ok)"><b>${esc(title)} (${ocrRows.length})</b></p>
+  <div class="tw" style="max-height:240px;overflow:auto"><table>
+    <tr><th>Dish</th><th>Cat</th><th>₹</th><th></th></tr>
+    ${ocrRows.map((x,i)=>`<tr>
+      <td><input value="${esc(x.n)}" onchange="ocrRows[${i}].n=this.value"></td>
+      <td><input value="${esc(x.c||"Mains")}" onchange="ocrRows[${i}].c=this.value"></td>
+      <td><input type="number" value="${+x.p||0}" style="width:72px" onchange="ocrRows[${i}].p=+this.value||0"></td>
+      <td><button class="sm wr" onclick="ocrRows.splice(${i},1);renderOcrPreview('Updated')">×</button></td>
+    </tr>`).join("")}
+  </table></div>
+  <div class="tbs" style="margin-top:10px"><button class="pri" onclick="importOcr()">Add All to Menu</button></div>`;
+}
+function importOcr(){
+  let nextId=S.menu.reduce((mx,x)=>Math.max(mx,x.id),0)+1;
+  ocrRows.forEach(x=>{
+    if(!x.n||!x.p)return;
+    S.menu.push({id:nextId++,n:x.n.trim(),p:+x.p,c:(x.c||"Mains").trim(),s:"",u:0,g:x.g??null,v:[],a:[],oos:false});
+  });
+  save();closeMdl();render();toast("Imported "+ocrRows.length+" dishes!");
+}
+
+// ---------- STOCK (CARGO) ----------
+function vStock(){
+  return `<div class="card tw">
+    <div class="row" style="border:0;padding:0"><b>Cargo Hold (${S.stock.length})</b>
+      <div class="tbs" style="margin:0">
+        <button class="pri sm" onclick="openStockForm()">+ Add Stock Item</button>
+        <button class="sm" onclick="dlCsv('stock')">Export CSV</button>
+      </div>
+    </div>
+    <table style="margin-top:8px">
+      <tr><th>Item</th><th>In Stock</th><th>Min</th><th>Status</th><th>Adjust</th></tr>
+      ${S.stock.map((s,i)=>`<tr>
+        <td><b>${esc(s.n)}</b></td><td>${s.q} ${esc(s.u)}</td><td>${s.min}</td>
+        <td>${s.q<=s.min?`<span class="tag low">Low</span>`:`<span class="tag okt">OK</span>`}</td>
+        <td>
+          <button class="sm" onclick="S.stock[${i}].q=R(Math.max(0,S.stock[${i}].q-1));save();render()">−1</button>
+          <button class="sm" onclick="S.stock[${i}].q=R(S.stock[${i}].q+5);save();render()">+5</button>
+          <button class="sm" onclick="openStockForm(${i})">Edit</button>
+          <button class="sm wr" onclick="S.stock.splice(${i},1);save();render()">Del</button>
+        </td>
+      </tr>`).join("")||`<tr><td colspan="5" class="mu">No stock items yet. Click "+ Add Stock Item".</td></tr>`}
+    </table>
+    <p class="mu">Stock auto-deducts when a linked dish is billed.</p>
+  </div>`;
+}
+function openStockForm(idx=null){
+  const s=idx!==null?S.stock[idx]:{n:"",q:0,min:5,u:"kg"};
+  showMdl(`<b>${idx!==null?"Edit Stock":"Add Stock Item"}</b>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <input id="sn" placeholder="Item Name (e.g. Milk, Batter, Paneer)" value="${esc(s.n)}">
+      <div class="g3">
+        <input id="sq" type="number" step="0.01" placeholder="Current Qty" value="${s.q}">
+        <input id="sm" type="number" step="0.01" placeholder="Min Alert" value="${s.min}">
+        <input id="su" placeholder="Unit (kg, ltr, pcs)" value="${esc(s.u)}">
+      </div>
+    </div>
+    <div class="tbs"><button class="pri" onclick="saveStock(${idx===null?"null":idx})">Save</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function saveStock(idx){
+  const n=$("#sn").value.trim();if(!n)return toast("Name required");
+  const obj={n,q:+$("#sq").value||0,min:+$("#sm").value||0,u:$("#su").value.trim()||"pcs"};
+  if(idx!==null)S.stock[idx]=obj;else S.stock.push(obj);
+  save();closeMdl();render();toast("Stock saved");
+}
+
+// ---------- LOYALTY ----------
+function vCust(){
+  const A=Object.entries(S.cust).sort((a,b)=>b[1].spent-a[1].spent);
+  const T=A.filter(([p,c])=>c.opt&&(sg==="All"||seg(c)===sg));
+  return `<div class="card tw">
+    <div class="row" style="border:0;padding:0"><b>Guests (${A.length})</b><button class="sm" onclick="dlCsv('cust')">Export CSV</button></div>
+    <table style="margin-top:8px"><tr><th>Name</th><th>Mobile</th><th>Points</th><th>Visits</th><th>Spent</th><th>Segment</th></tr>
+    ${A.map(([p,c])=>`<tr><td>${esc(c.name)}</td><td>${p}</td><td>${c.pts}</td><td>${c.visits}</td><td>₹${c.spent}</td><td><span class="tag">${seg(c)}</span></td></tr>`).join("")||`<tr><td colspan="6" class="mu">No guests recorded yet.</td></tr>`}
+    </table><p class="mu">${S.cfg.ptsPer10||1} point per ₹10 spent. Redeem ${S.cfg.redeemPts||100} pts = ₹${S.cfg.redeemVal||50}.</p>
+  </div>
+  <div class="card"><b>WhatsApp Campaign</b>
+    <div class="g2" style="margin-top:8px">
+      <select onchange="sg=this.value;render()">${["All","New","Regular","Lapsed"].map(x=>`<option ${x===sg?"selected":""}>${x}</option>`).join("")}</select>
+      <input type="number" min="1" value="${LD}" onchange="LD=+this.value||14;render()" title="Lapsed after N days">
+    </div>
+    <textarea rows="3" style="margin-top:8px" onchange="msg=this.value;render()">${esc(msg)}</textarea>
+    ${sb&&T.length?`<button class="pri" style="margin:8px 0" onclick="T_all()">Send to all (${T.length})</button>`:""}
+    ${T.map(([p,c])=>`<div class="row"><span>${esc(c.name)} · ${p}</span><button class="sm" onclick="sendWA('${p}',wt('${p}'))">Send</button></div>`).join("")||`<p class="mu">No opted-in guests in this segment.</p>`}
+  </div>`;
+}
+const wt=p=>msg.replace("{name}",S.cust[p].name).replace("{rName}",S.cfg.rName||"DineLoop");
+function T_all(){Object.entries(S.cust).filter(([p,c])=>c.opt&&(sg==="All"||seg(c)===sg)).forEach(([p],i)=>setTimeout(()=>sendWA(p,wt(p)),i*1200));}
+
+// ---------- REPORTS, BILL HISTORY, Z-REPORT, VOID, CSV, AI ----------
+function vRep(){
+  const td=new Date().toDateString();
+  const allTd=S.bills.filter(b=>new Date(b.t).toDateString()===td);
+  const B=allTd.filter(b=>!b.voided),voids=allTd.filter(b=>b.voided);
+  const tot=B.reduce((a,b)=>a+b.tot,0),taxTot=R(B.reduce((a,b)=>a+(b.tax||0),0)),discTot=R(B.reduce((a,b)=>a+(b.disc||0),0));
+  const pay={},it={},hr=Array(12).fill(0);
+  B.forEach(b=>{
+    if(b.splits){Object.entries(b.splits).forEach(([k,v])=>pay[k]=(pay[k]||0)+v);}
+    else pay[b.pay]=(pay[b.pay]||0)+b.tot;
+    b.items.forEach(i=>it[i.n]=(it[i.n]||0)+i.q);
+    const h=new Date(b.t).getHours()-11;if(h>=0&&h<12)hr[h]+=b.tot;
+  });
+  const top=Object.entries(it).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...hr);
+  const expCash=(+S.cfg.openCash||0)+(pay.Cash||0);
+  const ins=[],low=S.stock.filter(s=>s.q<=s.min),lp=Object.values(S.cust).filter(c=>c.opt&&seg(c)==="Lapsed").length;
+  if(low.length)ins.push(`Low stock: ${low.map(s=>s.n).join(", ")}.`);
+  if(top[0])ins.push(`Best seller today: ${top[0][0]} (${top[0][1]} sold).`);
+  if(lp)ins.push(`${lp} opted-in guests haven't visited in ${LD}+ days.`);
+
+  return `<div class="stats">
+    <div class="card"><span class="mu">Net Sales Today</span><b>₹${tot}</b></div>
+    <div class="card"><span class="mu">Bills (Void: ${voids.length})</span><b>${B.length}</b></div>
+    <div class="card"><span class="mu">GST Collected</span><b>₹${taxTot}</b></div>
+    <div class="card"><span class="mu">Drawer Cash</span><b>₹${expCash}</b></div>
+  </div>
+  <div class="tbs" style="margin-bottom:10px">
+    <button class="pri sm" onclick="printZReport()">Print Day-End Z-Report</button>
+    <button class="sm" onclick="dlCsv('bills')">Export Bills CSV</button>
+  </div>
+  <div class="g2">
+    <div class="card"><b>Sales by Hour (11am–10pm)</b><div class="bar" style="margin-top:10px">${hr.map(v=>`<i style="height:${v/mx*100}%" title="₹${v}"></i>`).join("")}</div></div>
+    <div class="card"><b>Payment Breakdown</b>
+      <div class="row"><span>Opening Cash Float</span><span>₹${S.cfg.openCash||0}</span></div>
+      ${Object.entries(pay).map(([k,v])=>`<div class="row"><span>${esc(k)}</span><span>₹${v}</span></div>`).join("")||`<p class="mu">No bills yet</p>`}
+      <div class="row"><span>Discounts Given</span><span>₹${discTot}</span></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card"><b>Top Dishes</b>${top.slice(0,5).map(([n,v])=>`<div class="row"><span>${esc(n)}</span><span>${v}</span></div>`).join("")||`<p class="mu">No sales yet</p>`}</div>
+    <div class="card"><b>Smart Insights & Ask AI</b>
+      ${ins.map(x=>`<p>• ${esc(x)}</p>`).join("")||`<p class="mu">Make a few sales to see rule-based insights.</p>`}
+      <div class="tbs" style="margin-top:8px">
+        <input id="aiQ" placeholder="Ask AI (e.g. How to boost weekday sales?)" style="flex:1">
+        <button class="sm pri" onclick="askAi()" ${aiBusy?"disabled":""}>${aiBusy?"…":"Ask AI"}</button>
+      </div>
+      ${aiAns?`<div style="margin-top:8px;white-space:pre-wrap;font-size:14px">${esc(aiAns)}</div>`:""}
+    </div>
+  </div>
+  <div class="card tw"><b>Today's Bills (${allTd.length})</b>
+    <table style="margin-top:8px"><tr><th>Invoice</th><th>Time</th><th>Table</th><th>Mode</th><th>Total</th><th>Pay</th><th>Actions</th></tr>
+    ${[...allTd].reverse().map(b=>`<tr style="${b.voided?"opacity:.45;text-decoration:line-through":""}">
+      <td>${esc(b.invNo||"#"+b.no)}</td>
+      <td>${new Date(b.t).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</td>
+      <td>${esc(b.table)}</td><td>${esc(b.mode||"Dine-In")}</td>
+      <td>₹${b.tot}</td><td>${esc(b.payLabel||b.pay)}</td>
+      <td>
+        <button class="sm" onclick="prn(S.bills.find(x=>x.no===${b.no}))">Reprint</button>
+        ${b.ph?`<button class="sm" onclick="sendBillWA('${b.ph}',S.bills.find(x=>x.no===${b.no}))">WA</button>`:""}
+        ${!b.voided?`<button class="sm wr" onclick="voidBill(${b.no})">Void</button>`:`<span class="tag low">${esc(b.voidReason||"Void")}</span>`}
+      </td>
+    </tr>`).join("")||`<tr><td colspan="7" class="mu">No bills today.</td></tr>`}
+    </table>
+  </div>`;
+}
+function printZReport(){
+  const td=new Date().toDateString(),allTd=S.bills.filter(b=>new Date(b.t).toDateString()===td);
+  const B=allTd.filter(b=>!b.voided),voids=allTd.filter(b=>b.voided);
+  const pay={};B.forEach(b=>{if(b.splits)Object.entries(b.splits).forEach(([k,v])=>pay[k]=(pay[k]||0)+v);else pay[b.pay]=(pay[b.pay]||0)+b.tot;});
+  const tot=B.reduce((a,b)=>a+b.tot,0),tax=R(B.reduce((a,b)=>a+(b.tax||0),0)),disc=R(B.reduce((a,b)=>a+(b.disc||0),0));
+  pt([
+    (S.cfg.rName||"DINELOOP")+" - Z REPORT",
+    new Date().toLocaleString("en-IN"),
+    "-".repeat(32),
+    L("Bills Count",B.length),
+    L("Voided Bills",voids.length),
+    L("Discounts","₹"+disc),
+    L("Total GST","₹"+tax),
+    L("NET SALES","₹"+tot),
+    "-".repeat(32),
+    L("Open Cash","₹"+(S.cfg.openCash||0)),
+    ...Object.entries(pay).map(([k,v])=>L(k,"₹"+v)),
+    L("Expected Cash","₹"+((+S.cfg.openCash||0)+(pay.Cash||0))),
+    "-".repeat(32)
+  ].join("\n"));
+}
+function voidBill(no){
+  requireMgrPin(()=>{
+    const b=S.bills.find(x=>x.no===no);if(!b||b.voided)return;
+    const reason=prompt("Reason for void / refund:");if(!reason)return;
+    b.voided=true;b.voidReason=reason.trim();b.voidAt=Date.now();
+    // Restore stock
+    b.items.forEach(bi=>{
+      const m=S.menu.find(x=>bi.n.startsWith(x.n));if(!m||!m.s)return;
+      const s=S.stock.find(x=>x.n===m.s);if(s)s.q=R(s.q+m.u*bi.q);
+    });
+    save();render();toast("Bill voided & stock restored");
+  });
+}
+async function askAi(){
+  const qText=($("#aiQ").value||"").trim();if(!qText)return toast("Enter a question");
+  if(!sb)return toast("AI requires Cloud Mode");
+  aiBusy=true;render();
+  const td=new Date().toDateString(),B=S.bills.filter(b=>!b.voided&&new Date(b.t).toDateString()===td);
+  const summary={
+    billsToday:B.length,salesToday:B.reduce((a,b)=>a+b.tot,0),
+    totalGuests:Object.keys(S.cust).length,menuCount:S.menu.length,
+    lowStock:S.stock.filter(s=>s.q<=s.min).map(s=>s.n)
+  };
+  const r=await sb.functions.invoke("ai-assistant",{body:{mode:"ask",question:qText,summary}});
+  aiBusy=false;
+  aiAns=(r.data&&r.data.text)?r.data.text:(r.data&&r.data.error?r.data.error:"Set GEMINI_API_KEY in Supabase Edge Function ai-assistant.");
+  render();
+}
+function dlCsv(kind){
+  let rows=[];
+  if(kind==="bills")rows=[["Invoice","Date","Table","Mode","Subtotal","Discount","GST","Total","Payment","Voided"],...S.bills.map(b=>[b.invNo||b.no,new Date(b.t).toISOString(),b.table,b.mode||"Dine-In",b.sub,b.disc,b.tax||0,b.tot,b.payLabel||b.pay,b.voided?"YES":"NO"])];
+  if(kind==="menu")rows=[["ID","Name","Category","Price","GST%","StockLink","Usage","OutOfStock"],...S.menu.map(m=>[m.id,m.n,m.c,m.p,m.g??S.cfg.taxPct,m.s,m.u,m.oos?"YES":"NO"])];
+  if(kind==="cust")rows=[["Mobile","Name","Points","Visits","Spent","WhatsAppOptIn"],...Object.entries(S.cust).map(([p,c])=>[p,c.name,c.pts,c.visits,c.spent,c.opt?"YES":"NO"])];
+  if(kind==="stock")rows=[["Item","Qty","Unit","Min"],...S.stock.map(s=>[s.n,s.q,s.u,s.min])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download=`dineloop-${activeOutlet}-${kind}.csv`;a.click();
+}
+
+// ---------- SETTINGS (UPI/BANK QR, TAX, INVOICE, COUPONS, STAFF ROLES) ----------
+function vCfg(){
+  const c=S.cfg;
+  const menuQrUrl=location.origin+location.pathname+"?outlet="+encodeURIComponent(activeOutlet);
+  return `
+  <div class="g2">
+    <div class="card"><b>Restaurant & Tax Profile</b>
+      <div style="margin-top:8px;display:grid;gap:8px">
+        <input id="cName" placeholder="Restaurant Name" value="${esc(c.rName)}">
+        <div class="g2"><input id="cPh" placeholder="Phone" value="${esc(c.phone)}"><input id="cGst" placeholder="GSTIN" value="${esc(c.gstin)}"></div>
+        <input id="cAddr" placeholder="Address (printed on bill)" value="${esc(c.addr)}">
+        <div class="g3">
+          <div><label class="mu">Default GST %</label><input id="cTax" type="number" step="0.5" value="${c.taxPct}"></div>
+          <div><label class="mu">Service Chg %</label><input id="cSvc" type="number" step="0.5" value="${c.svcPct}"></div>
+          <div><label class="mu">Parcel Pkg ₹</label><input id="cPkg" type="number" value="${c.pkgFee}"></div>
+        </div>
+        <div class="g3">
+          <div><label class="mu">Delivery Fee ₹</label><input id="cDel" type="number" value="${c.delFee}"></div>
+          <div><label class="mu">Invoice Prefix</label><input id="cPref" value="${esc(c.invPrefix)}"></div>
+          <div><label class="mu">Next Inv #</label><input id="cNext" type="number" value="${c.invNext}"></div>
+        </div>
+        <div class="g3">
+          <div><label class="mu">Opening Cash ₹</label><input id="cOpen" type="number" value="${c.openCash}"></div>
+          <div><label class="mu">Manager PIN</label><input id="cPin" value="${esc(c.mgrPin)}"></div>
+          <label style="display:flex;align-items:center;gap:6px;padding-top:18px"><input id="cInc" type="checkbox" style="width:auto" ${c.taxInc?"checked":""}> Tax Inclusive</label>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px"><input id="cWPay" type="checkbox" style="width:auto" ${c.waiterCanPay?"checked":""}> Allow Waiter to mark Cash/UPI Paid</label>
+        <button class="pri" onclick="saveCfg()">Save Restaurant Settings</button>
+      </div>
+    </div>
+
+    <div class="card"><b>Payment UPI / Bank Details & QR</b>
+      <p class="mu">Enter your own UPI ID so Waiter & Cashier can show exact-amount scannable QR codes.</p>
+      <div style="margin-top:8px;display:grid;gap:8px">
+        <input id="cUpi" placeholder="UPI ID (e.g. yourshop@okaxis)" value="${esc(c.upiId)}">
+        <input id="cUpiNm" placeholder="Payee / Business Name" value="${esc(c.upiName)}">
+        <input id="cBank" placeholder="Optional Bank A/c / IFSC note" value="${esc(c.bankInfo)}">
+        <label class="tag" style="padding:8px;cursor:pointer;text-align:center">Upload Static UPI QR Image (Optional Backup)
+          <input type="file" accept="image/*" style="display:none" onchange="uploadStaticQr(this)">
+        </label>
+        ${c.upiId?`<div class="qr-box">${makeQrSvg(upiUri(100,"Test"),140)}<small style="color:#000">Preview ₹100 QR</small></div>`:""}
+        ${c.staticQr?`<div class="tbs"><span class="tag okt">Static QR saved</span><button class="sm wr" onclick="S.cfg.staticQr='';save();render()">Remove</button></div>`:""}
+        <button class="pri" onclick="saveCfg()">Save UPI / QR Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card"><b>Coupons (${c.coupons.length})</b>
+      <div class="tbs" style="margin-top:8px">
+        <input id="cpCode" placeholder="CODE (e.g. FEST10)" style="flex:1">
+        <select id="cpType" style="width:90px"><option value="pct">%</option><option value="flat">₹</option></select>
+        <input id="cpVal" type="number" placeholder="Val" style="width:75px">
+        <input id="cpMin" type="number" placeholder="Min ₹" style="width:80px">
+        <button class="sm pri" onclick="addCoupon()">Add</button>
+      </div>
+      ${c.coupons.map((cp,i)=>`<div class="row"><span><b>${esc(cp.code)}</b> · ${cp.val}${cp.type==="pct"?"%":"₹"} off (min ₹${cp.min||0})</span><button class="sm wr" onclick="S.cfg.coupons.splice(${i},1);save();render()">Del</button></div>`).join("")||`<p class="mu">No coupons added.</p>`}
+    </div>
+
+    <div class="card"><b>Staff Crew & Logins (${activeOutlet})</b>
+      <p class="mu">Create Waiter, Cashier, Manager, or Kitchen logins for this restaurant.</p>
+      <div class="g2" style="margin-top:8px">
+        <input id="stEm" placeholder="Staff Email (e.g. waiter1@cafe.com)">
+        <input id="stPw" type="password" placeholder="Password (for new login)">
+      </div>
+      <div class="g3" style="margin-top:6px">
+        <input id="stNm" placeholder="Name (e.g. Raju)">
+        <select id="stRl"><option value="waiter">Waiter</option><option value="cashier">Cashier</option><option value="kitchen">Kitchen</option><option value="manager">Manager</option><option value="admin">Admin</option></select>
+        <input id="stPin" placeholder="4-digit PIN" value="1234">
+      </div>
+      <div class="tbs" style="margin-top:8px">
+        <button class="pri sm" onclick="createCrewLogin()">+ Create Crew Login</button>
+        <button class="sm" onclick="addLocalPin()">+ Local PIN Only</button>
+      </div>
+      ${roleList.filter(r=>r.restaurant_id===activeOutlet).map(r=>`<div class="row">
+        <span><b>${esc(r.display_name||r.email)}</b> (${esc(r.email)}) <span class="tag">${r.role.toUpperCase()}</span></span>
+        <span class="tag ${r.active?"okt":"low"}">${r.active?"Active":"Off"}</span>
+      </div>`).join("")}
+      ${c.staffPins.map((p,i)=>`<div class="row"><span>PIN: <b>${esc(p.name)}</b> <span class="tag">${p.role}</span></span><button class="sm wr" onclick="S.cfg.staffPins.splice(${i},1);save();render()">Del</button></div>`).join("")}
+    </div>
+  </div>`;
+}
+function saveCfg(){
+  const c=S.cfg;
+  c.rName=$("#cName").value.trim()||"DINELOOP";c.phone=$("#cPh").value.trim();c.gstin=$("#cGst").value.trim();c.addr=$("#cAddr").value.trim();
+  c.taxPct=+$("#cTax").value||0;c.svcPct=+$("#cSvc").value||0;c.pkgFee=+$("#cPkg").value||0;c.delFee=+$("#cDel").value||0;
+  c.invPrefix=$("#cPref").value.trim()||"DL-";c.invNext=Math.max(1,+$("#cNext").value||1);
+  c.openCash=+$("#cOpen").value||0;c.mgrPin=$("#cPin").value.trim()||"1234";
+  c.taxInc=$("#cInc").checked;c.waiterCanPay=$("#cWPay").checked;
+  c.upiId=$("#cUpi").value.trim();c.upiName=$("#cUpiNm").value.trim();c.bankInfo=$("#cBank").value.trim();
+  save();render();toast("Settings saved");
+}
+async function uploadStaticQr(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const b64=await compressImgB64(f,420);
+  S.cfg.staticQr="data:image/jpeg;base64,"+b64;save();render();toast("Static QR saved");
+}
+function addCoupon(){
+  const code=$("#cpCode").value.trim().toUpperCase();if(!code)return toast("Enter code");
+  S.cfg.coupons.push({code,type:$("#cpType").value,val:+$("#cpVal").value||0,min:+$("#cpMin").value||0});
+  save();render();
+}
+function addLocalPin(){
+  const name=$("#stNm").value.trim(),role=$("#stRl").value,pin=$("#stPin").value.trim()||"1234";
+  if(!name)return toast("Enter staff name");
+  S.cfg.staffPins.push({name,role,pin});save();render();toast("Local PIN added");
+}
+
+async function createCrewLogin(customRestId=null,customRestName=null,customCity="",customPlan="trial"){
+  const email=($("#stEm")?.value||$("#saEm")?.value||"").trim(),pw=($("#stPw")?.value||$("#saPw")?.value||"").trim();
+  const role=customRestId?"admin":$("#stRl").value,name=($("#stNm")?.value||$("#saOwner")?.value||"").trim();
+  const pin=$("#stPin")?.value||"1234";
+  if(!email)return toast("Email required");
+  if(!sb)return toast("Requires Cloud Mode");
+  if(pw){
+    const r=await sb.functions.invoke("manage-users",{body:{
+      action:"create",email,password:pw,restaurant_id:customRestId||activeOutlet,
+      restaurant_name:customRestName,city:customCity,plan:customPlan,role,display_name:name,pin
+    }});
+    if(!r.error&&r.data&&r.data.ok){await loadSaasLists();render();return toast("Created login for "+email);}
+  }
+  // Fallback: assign role via SQL RPC if user was already created in Supabase Auth
+  const rpc=await sb.rpc("assign_user_by_email",{p_email:email,p_restaurant_id:customRestId||activeOutlet,p_role:role,p_name:name,p_pin:pin});
+  if(rpc.error)return toast(rpc.error.message);
+  await loadSaasLists();render();toast("Role assigned to "+email);
+}
+
+// ---------- SUPER ADMIN SAAS CONTROL DECK ----------
+function vSaas(){
+  if(trueRole!=="superadmin")return`<div class="card"><b>Restricted</b><p class="mu">Platform Owner access only.</p></div>`;
+  return `
+  <div class="stats">
+    <div class="card"><span class="mu">Total Restaurants</span><b>${restList.length}</b></div>
+    <div class="card"><span class="mu">Active Outlets</span><b>${restList.filter(r=>r.active).length}</b></div>
+    <div class="card"><span class="mu">Total Staff Logins</span><b>${roleList.length}</b></div>
+    <div class="card"><span class="mu">Current Deck</span><b>${esc(activeOutlet)}</b></div>
+  </div>
+  <div class="g2">
+    <div class="card"><b>+ Onboard New Restaurant Client</b>
+      <div style="margin-top:8px;display:grid;gap:8px">
+        <div class="g2">
+          <input id="saId" placeholder="Outlet ID slug (e.g. jaipur-spice)">
+          <input id="saNm" placeholder="Restaurant Name (e.g. Jaipur Spice)">
+        </div>
+        <div class="g2">
+          <input id="saCity" placeholder="City (e.g. Jaipur)">
+          <select id="saPlan"><option value="trial">Trial</option><option value="pro">Pro</option><option value="enterprise">Enterprise</option></select>
+        </div>
+        <div class="g2">
+          <input id="saEm" placeholder="Owner Admin Email">
+          <input id="saPw" type="password" placeholder="Owner Password">
+        </div>
+        <input id="saOwner" placeholder="Owner Display Name">
+        <button class="pri" onclick="onboardRest()">Create Restaurant & Owner Login</button>
+      </div>
+    </div>
+
+    <div class="card tw"><b>All Client Restaurants (${restList.length})</b>
+      <table style="margin-top:8px"><tr><th>Outlet</th><th>Name</th><th>Plan</th><th>Status</th><th>Actions</th></tr>
+      ${restList.map(r=>`<tr>
+        <td><b>${esc(r.id)}</b></td>
+        <td>${esc(r.name)}${r.city?`<br><small class="mu">${esc(r.city)}</small>`:""}</td>
+        <td><span class="tag">${esc(r.plan)}</span></td>
+        <td><span class="tag ${r.active?"okt":"low"}">${r.active?"Active":"Paused"}</span></td>
+        <td>
+          <button class="sm ${activeOutlet===r.id?"on":""}" onclick="switchOutlet('${esc(r.id)}')">Open</button>
+          <button class="sm ${r.active?"wr":"ok"}" onclick="toggleRest('${esc(r.id)}',${!r.active})">${r.active?"Pause":"Enable"}</button>
+        </td>
+      </tr>`).join("")}
+      </table>
+    </div>
+  </div>
+  <div class="card tw"><b>All Users Across Platform (${roleList.length})</b>
+    <table style="margin-top:8px"><tr><th>Email</th><th>Name</th><th>Outlet</th><th>Role</th><th>Status</th></tr>
+    ${roleList.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.display_name)}</td><td>${esc(u.restaurant_id)}</td><td><span class="tag">${esc(u.role)}</span></td><td>${u.active?"Active":"Disabled"}</td></tr>`).join("")}
+    </table>
+  </div>`;
+}
+async function onboardRest(){
+  const id=$("#saId").value.trim().toLowerCase().replace(/[^a-z0-9-_]/g,"-");
+  const name=$("#saNm").value.trim();if(!id||!name)return toast("Outlet ID and Name required");
+  const city=$("#saCity").value.trim(),plan=$("#saPlan").value;
+  const r=await sb.from("restaurants").upsert({id,name,city,plan,owner_email:$("#saEm").value.trim(),active:true});
+  if(r.error)return toast(r.error.message);
+  if($("#saEm").value.trim())await createCrewLogin(id,name,city,plan);
+  await loadSaasLists();render();toast("Restaurant "+name+" ready!");
+}
+async function switchOutlet(id){await loadOutletState(id);restInfo=restList.find(x=>x.id===id)||null;tab="bill";render();toast("Switched to "+id);}
+async function toggleRest(id,act){
+  const r=await sb.from("restaurants").update({active:act}).eq("id",id);
+  if(r.error)return toast(r.error.message);
+  await loadSaasLists();render();toast(id+(act?" enabled":" paused"));
+}
+
+// ---------- KEYBOARD SHORTCUTS ----------
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeMdl();return;}
+  if(tab==="bill"&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"")){
+    if(e.key==="F2"){e.preventDefault();$("#srch")?.focus();}
+    if(e.key==="F8"){e.preventDefault();kot();}
+    if(e.key==="F4"){e.preventDefault();pay("Cash");}
+  }
+});
+
 boot();
-</script></body></html>
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+FREE AI ASSISTANT SETUP
+=======================
+The function reads summary numbers (sales, top dishes, stock) and answers questions like
+"Why were sales low on Tuesday?". We use Google Gemini's free tier. Limits and terms change,
+so read the current free-tier rules on the Google AI Studio page. The app never sends
+guest phone numbers to the AI, only totals.
+
+STEP 1. GET A FREE KEY
+  aistudio.google.com -> sign in -> "Get API key" -> "Create API key" -> COPY it.
+
+STEP 2. SAVE IT IN SUPABASE (terminal inside the dineloop-cloud folder)
+  npx supabase@latest secrets set GEMINI_API_KEY=YOUR_KEY
+  npx supabase@latest functions deploy ai-assistant
+
+STEP 3. IF YOU GET "NO ANSWER"
+  The model name may have changed. Pick a current Flash model name in AI Studio, then:
+  npx supabase@latest secrets set GEMINI_MODEL=THE_MODEL_NAME
+
+STEP 4. USING IT IN THE APP
+  The function is ready now. The "Ask AI" box in Reports will be added in the next feature batch.
+
+OTHER FREE OPTIONS
+  Groq (console.groq.com) also has a free tier. Ask me to switch the function to Groq.
+  Smart insights in Reports already work with no AI key at all.

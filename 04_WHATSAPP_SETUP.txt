@@ -1,0 +1,50 @@
+WHATSAPP AUTOMATIC SENDING (official WhatsApp Cloud API)
+========================================================
+Meta changes its screens and prices often. Follow the closest option and check current pricing.
+
+STEP 1. META DEVELOPER APP
+  developers.facebook.com -> log in -> "My Apps" -> "Create App".
+  Use case: "Other" -> app type "Business" -> give a name -> Create.
+  In the app dashboard find "WhatsApp" -> "Set up".
+  Connect or create a Meta Business portfolio when asked.
+
+STEP 2. TEST NUMBER
+  WhatsApp -> "API Setup". Meta gives a free test number.
+  Copy the "Phone number ID" (a long number).
+  Add your own mobile in "To" -> verify with the code -> send the sample message.
+
+STEP 3. PERMANENT TOKEN
+  The token on that page lasts 24 hours only. Make a permanent one:
+  business.facebook.com -> Business settings -> Users -> "System users" -> Add (role Admin).
+  "Add assets" -> your app -> Full control.
+  "Generate token" -> select your app -> tick whatsapp_business_messaging and
+  whatsapp_business_management -> Generate -> COPY the token and keep it secret.
+
+STEP 4. MESSAGE TEMPLATE
+  business.facebook.com -> WhatsApp Manager -> "Message templates" -> "Create template".
+  Category: Utility
+  Name: dineloop_update      (exactly this)
+  Language: English
+  Body text: DineLoop update: {{1}}
+  Add a sample value for {{1}} and Submit. Approval usually takes minutes to a day.
+
+STEP 5. YOUR REAL RESTAURANT NUMBER (later)
+  WhatsApp -> API Setup -> "Add phone number". Use a number that is not active in
+  the normal WhatsApp app (or follow Meta's steps to move it). Business verification
+  may be needed for higher sending limits.
+
+STEP 6. SAVE SECRETS IN SUPABASE (terminal inside the dineloop-cloud folder)
+  npx supabase@latest secrets set WA_PHONE_ID=YOUR_PHONE_NUMBER_ID WA_TOKEN=YOUR_PERMANENT_TOKEN
+  npx supabase@latest functions deploy send-wa
+
+STEP 7. TEST
+  In the app, bill a guest with a mobile number and tick "Guest agrees to WhatsApp messages".
+  The bill message should arrive on that WhatsApp. While on the test number, only numbers
+  you added in API Setup can receive messages.
+
+RULES
+  - Message only guests who agreed. The app enforces this.
+  - Prices and free limits for template messages change. Check Meta's current WhatsApp
+    Business pricing page before big campaigns.
+  - Template variables cannot contain line breaks. The app already sends one-line text.
+  - Do not use unofficial WhatsApp bots or libraries. They can get your number banned.

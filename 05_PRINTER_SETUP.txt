@@ -1,0 +1,31 @@
+PRINTER SETUP (bills and KOT)
+=============================
+The app prints through the browser, so any thermal printer with a normal driver works.
+
+STEP 1. INSTALL THE PRINTER
+  Connect by USB or network. Install the maker's driver (Epson, TVS, Rongta, Xprinter...).
+  Set it as the DEFAULT printer (Windows: Settings -> Printers & scanners).
+  Printing preferences -> paper size 80 mm (or 58 mm for small printers). Margins: none/minimum.
+
+STEP 2. TEST PRINT
+  In the app make a bill -> "Print bill". A print window opens; choose the printer
+  and print. Check the width and that nothing is cut off.
+
+STEP 3. SILENT PRINTING (no print window)
+  Windows: close Chrome. Right-click Desktop -> New -> Shortcut. Paste as the location:
+    "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk-printing https://YOUR-SITE-ADDRESS
+  Name it DineLoop. Always open the app using this shortcut on the billing PC.
+  Prints now go straight to the default printer.
+
+STEP 4. KITCHEN PRINTER
+  Use a second PC or tablet in the kitchen with its own default printer.
+  On the billing screen tick "Auto-print KOT" on that device.
+
+STEP 5. CASH DRAWER
+  Connect the drawer to the printer's RJ11 port. On many printers it opens when a bill prints.
+  Check the printer's manual for "drawer kick" settings.
+
+PROBLEMS
+  - Blank or very long page: set paper size to 80 mm and margins to none.
+  - Text too small: increase printer scaling to 100%.
+  - Android tablet: install your printer's print-service app, then print from Chrome.

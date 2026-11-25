@@ -1,0 +1,43 @@
+GITHUB SETUP
+============
+STEP 1. ACCOUNT
+  github.com -> "Sign up". Verify your email.
+
+STEP 2. CREATE A PRIVATE REPOSITORY
+  Top right "+" -> "New repository".
+  Repository name: dineloop
+  Choose "Private". Click "Create repository".
+
+STEP 3A. UPLOAD WITHOUT ANY TOOL (easiest)
+  On the empty repo page click "uploading an existing file".
+  Unzip dineloop-cloud.zip on your computer. Select EVERYTHING inside the folder
+  (index.html, README.md, .gitignore, docs, sql, supabase) and drag it into the page.
+  Wait for the upload, write "first version" in the message box, click "Commit changes".
+  (If .gitignore is hidden on your computer, it is okay to skip it.)
+
+STEP 3B. UPLOAD WITH GIT (better for later updates)
+  Install Git from git-scm.com. Open a terminal inside the dineloop-cloud folder:
+    git init
+    git add .
+    git commit -m "first version"
+    git branch -M main
+    git remote add origin https://github.com/YOUR_USERNAME/dineloop.git
+    git push -u origin main
+  GitHub will ask you to sign in in the browser the first time.
+
+STEP 4. UPDATING LATER
+  Easy way: open the file on GitHub -> pencil icon -> edit -> "Commit changes".
+  Git way:  git add .   then   git commit -m "what changed"   then   git push
+  Cloudflare Pages (file 03) redeploys automatically after every push.
+
+STEP 5. VERSION TAGS (optional but useful)
+  After a version works well:
+    git tag v1.0
+    git push origin v1.0
+  Or on GitHub: "Releases" -> "Create a new release" -> type tag v1.0 -> Publish.
+  If something breaks later, you can go back to a tagged version.
+
+SAFETY CHECKLIST
+  [ ] Repo is Private.
+  [ ] index.html contains only the Supabase URL + anon/publishable key.
+  [ ] No WhatsApp token, Gemini key or service_role key anywhere in the files.

@@ -1,0 +1,25 @@
+DINELOOP SETUP: START HERE
+==========================
+Do the files in this order. Each one is click-by-click.
+
+  01_SUPABASE_SETUP.txt   database, login, live sync, functions
+  02_GITHUB_SETUP.txt     put the code on GitHub
+  03_HOSTING_SETUP.txt    make the site live (Cloudflare Pages) + install as app
+  04_WHATSAPP_SETUP.txt   automatic WhatsApp messages
+  05_PRINTER_SETUP.txt    bill and KOT printing
+  06_AI_SETUP.txt         free AI assistant
+
+WHAT EACH CODE FILE IS
+  index.html                                  the whole app (what staff open)
+  sql/01_schema.sql                           creates the database table. Run in Supabase.
+  supabase/functions/send-wa/index.ts         sends WhatsApp messages. Deploy to Supabase.
+  supabase/functions/ai-assistant/index.ts    free AI answers. Deploy to Supabase.
+  .gitignore, README.md                       for GitHub
+
+GOLDEN RULES
+  1. Two values go into index.html: Supabase "Project URL" and "anon/publishable key". Nothing else.
+  2. NEVER put these in index.html or GitHub: service_role/secret key, WhatsApp token, Gemini key.
+     They are stored only inside Supabase using "secrets set".
+  3. Keep the GitHub repository PRIVATE.
+  4. The app works in LOCAL MODE until you fill the Supabase values, so you can test first.
+  5. Each new feature batch may come with a new sql file (02_, 03_ ...). Run it once in SQL Editor.

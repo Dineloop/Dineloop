@@ -1,0 +1,62 @@
+SUPABASE SETUP (free plan)
+==========================
+Menu names in Supabase change sometimes. If a name differs a little, look for the closest one.
+
+STEP 1. ACCOUNT
+  Go to supabase.com -> "Start your project" -> sign in with GitHub or email.
+
+STEP 2. CREATE PROJECT
+  "New project" -> choose your organization.
+  Name: dineloop
+  Database password: click "Generate a password", COPY it and save it somewhere safe.
+  Region: pick the closest to India (South Asia / Mumbai if shown).
+  Plan: Free. Click "Create new project". Wait about 2 minutes.
+
+STEP 3. CREATE THE TABLE (run the SQL)
+  Left sidebar -> "SQL Editor" -> "New query".
+  Open sql/01_schema.sql, copy ALL text, paste, click "Run".
+  You should see "Success. No rows returned".
+  Check: left sidebar -> "Table Editor" -> you see the table app_state.
+
+STEP 4. BLOCK PUBLIC SIGN-UPS (important)
+  Left sidebar -> "Authentication" -> "Sign In / Providers" (or "Providers") -> "Email".
+  Turn OFF "Allow new users to sign up". Save.
+
+STEP 5. CREATE STAFF LOGINS
+  Authentication -> "Users" -> "Add user" -> "Create new user".
+  Enter email + password, tick "Auto Confirm User", click Create.
+  Make one login for each person (owner, cashier, captain). The email need not be real.
+
+STEP 6. COPY YOUR KEYS
+  Project Settings (gear icon) -> "API Keys" (or "API").
+  Copy: Project URL  (looks like https://abcd1234.supabase.co)
+  Copy: the "anon" key, or the "Publishable key" on newer projects.
+  DO NOT copy or share the "service_role" / "secret" key.
+  Open index.html, find the line that starts with:  const CFG=
+  Fill it:  const CFG={url:"PROJECT_URL",key:"ANON_OR_PUBLISHABLE_KEY",outlet:"main"};
+  (use a different outlet name for each restaurant, e.g. "jaipur-1")
+
+STEP 7. SET THE SITE ADDRESS (after hosting, see file 03)
+  Authentication -> "URL Configuration" -> Site URL = your live site address. Save.
+
+STEP 8. DEPLOY THE FUNCTIONS (WhatsApp and AI)
+  a) Install Node.js (LTS) from nodejs.org.
+  b) Open Terminal (Mac) or PowerShell (Windows) inside the dineloop-cloud folder.
+  c) Find your project ref: Project Settings -> General -> "Reference ID".
+  d) Run these one by one:
+       npx supabase@latest login
+       npx supabase@latest link --project-ref YOUR_PROJECT_REF
+       npx supabase@latest functions deploy send-wa
+       npx supabase@latest functions deploy ai-assistant
+     If it asks for Docker, add  --use-api  at the end of the deploy commands.
+  e) Secrets are set in files 04 (WhatsApp) and 06 (AI).
+  f) Check: left sidebar -> "Edge Functions" -> both show as deployed.
+
+STEP 9. TEST
+  Open the site, log in with a staff email. The top bar should say CLOUD SYNC.
+  Open the site on a second device, make a bill on one, and see it update on the other.
+
+GOOD TO KNOW
+  - Free projects can be paused after about a week with no use. Daily use keeps it awake.
+  - Take a backup now and then: Table Editor -> app_state -> export, or Database -> Backups.
+  - If login says "Invalid login", re-check the email/password and "Auto Confirm User".

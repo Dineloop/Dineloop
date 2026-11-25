@@ -306,12 +306,16 @@ try{const ls=JSON.parse(localStorage.getItem("dl2")||"null");if(ls)S=normState(l
 
 let sb=null,user=null,tmr=null,rtCh=null,rtPo=null;
 let myRole="admin",trueRole="admin",activeName="Owner";
-let restList=[],roleList=[],restInfo=null,pubOrders=[],demoLeads=[];
+const PLATFORM_ROLES=["superadmin","coadmin","qa_tester","bug_checker","support"];
+const ROLE_LABELS={superadmin:"Super Admin (Owner)",coadmin:"Co-Admin (Partner)",qa_tester:"QA Tester",bug_checker:"Bug Checker",support:"Support / Onboarding",admin:"Restaurant Admin",manager:"Manager",cashier:"Cashier",waiter:"Waiter",kitchen:"Kitchen"};
+const isPlatAdmin=()=>trueRole==="superadmin"||trueRole==="coadmin";
+const isPlatTeam=()=>PLATFORM_ROLES.includes(trueRole);
+let restList=[],roleList=[],restInfo=null,pubOrders=[],demoLeads=[],bugList=[],qaReport=[],qaBusy=false;
 let tab="bill",tb=TB[0]||"T1",q="",cat="All",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed";
 let msg="Hi {name}, we miss you at {rName}! Show this message for a special treat on your next visit.";
 let ocrRows=[],ocrBusy=false,aiAns="",aiBusy=false,kdsStation="All",kdsExpo=false,payGiftAmt=0,payGiftCode="";
 let lang="en";try{lang=localStorage.getItem("dl_lang")||"en";}catch(e){}
-const HI={bill:"बिलिंग",kds:"किचन",menu:"मेनू",stock:"स्टॉक",cust:"लॉयल्टी",ops:"ऑप्स & AI",rep:"रिपोर्ट्स",cfg:"सेटिंग्स",saas:"SaaS"};
+const HI={bill:"बिलिंग",kds:"किचन",menu:"मेनू",stock:"स्टॉक",cust:"लॉयल्टी",ops:"ऑप्स & AI",rep:"रिपोर्ट्स",cfg:"सेटिंग्स",saas:"SaaS",bugs:"बग्स"};
 function toggleLang(){lang=lang==="en"?"hi":"en";try{localStorage.setItem("dl_lang",lang);}catch(e){}if(!user&&window.renderLanding)window.renderLanding();else render();}
 function playChime(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.setValueAtTime(880,c.currentTime);o.frequency.exponentialRampToValueAtTime(1320,c.currentTime+0.12);g.gain.setValueAtTime(0.15,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.35);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.35);}catch(e){}}
 const dispCh=typeof BroadcastChannel!=="undefined"?new BroadcastChannel("dl_display"):null;
@@ -363,7 +367,7 @@ async function loadOutletState(outletId){
     try{loaded=JSON.parse(localStorage.getItem("dl2_"+outletId)||"null");}catch(e){}
   }
   S=normState(loaded,outletId);
-  if(outletId==="main"&&trueRole==="superadmin"&&!S.cfg._masterLoaded){
+  if(outletId==="main"&&isPlatAdmin()&&!S.cfg._masterLoaded){
     mergeMasterMenuInto(S);
     S.cfg._masterLoaded=true;
     if(sb&&user)save();
@@ -415,15 +419,16 @@ async function boot(){
       }
     }
     await loadSaasLists();
-    if(restInfo&&restInfo.active===false&&trueRole!=="superadmin"){
+    if(restInfo&&restInfo.active===false&&!isPlatTeam()){
       return blockedScreen("Subscription paused for "+restInfo.name+". Please contact DineLoop Support.");
     }
-    if(restInfo&&restInfo.plan==="trial"&&restInfo.trial_ends_at&&new Date(restInfo.trial_ends_at)<new Date()&&trueRole!=="superadmin"){
+    if(restInfo&&restInfo.plan==="trial"&&restInfo.trial_ends_at&&new Date(restInfo.trial_ends_at)<new Date()&&!isPlatTeam()){
       return blockedScreen("14-day Free Trial ended for "+restInfo.name+". Contact DineLoop to upgrade to Pro.");
     }
     await loadOutletState(activeOutlet);
     if(myRole==="waiter")return waiterRedirectScreen();
     else if(myRole==="kitchen")tab="kds";
+    else if(myRole==="bug_checker")tab="bugs";
     else tab="bill";
   }
   render();
@@ -447,9 +452,13 @@ async function loadSaasLists(){
   }
   const r2=await sb.from("user_roles").select("*").order("created_at",{ascending:true});
   if(!r2.error&&r2.data)roleList=r2.data;
-  if(trueRole==="superadmin"){
+  if(isPlatAdmin()||trueRole==="support"){
     const r3=await sb.from("demo_leads").select("*").order("created_at",{ascending:false});
     if(!r3.error&&r3.data)demoLeads=r3.data;
+  }
+  if(isPlatTeam()){
+    const r4=await sb.from("bug_reports").select("*").order("created_at",{ascending:false}).limit(60);
+    if(!r4.error&&r4.data)bugList=r4.data;
   }
 }
 
@@ -499,7 +508,11 @@ function cycleTheme(){
 }
 
 const ROLE_TABS={
-  superadmin:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["stock","📦 Stock"],["cust","✦ Loyalty"],["ops","⚡ Ops & AI"],["rep","◭ Reports"],["cfg","⚙ Settings"],["saas","⌘ SaaS"]],
+  superadmin:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["stock","📦 Stock"],["cust","✦ Loyalty"],["ops","⚡ Ops & AI"],["rep","◭ Reports"],["cfg","⚙ Settings"],["saas","⌘ SaaS"],["bugs","🐛 Bugs"]],
+  coadmin:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["stock","📦 Stock"],["cust","✦ Loyalty"],["ops","⚡ Ops & AI"],["rep","◭ Reports"],["cfg","⚙ Settings"],["saas","⌘ SaaS"],["bugs","🐛 Bugs"]],
+  qa_tester:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["rep","◭ Reports"],["saas","⌘ SaaS"],["bugs","🐛 Bugs"]],
+  bug_checker:[["bugs","🐛 Bugs"],["bill","◉ Billing"],["kds","🍳 Kitchen"]],
+  support:[["bill","◉ Billing"],["menu","☰ Menu"],["rep","◭ Reports"],["saas","⌘ SaaS"],["bugs","🐛 Bugs"]],
   admin:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["stock","📦 Stock"],["cust","✦ Loyalty"],["ops","⚡ Ops & AI"],["rep","◭ Reports"],["cfg","⚙ Settings"]],
   manager:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["menu","☰ Menu"],["stock","📦 Stock"],["cust","✦ Loyalty"],["ops","⚡ Ops & AI"],["rep","◭ Reports"]],
   cashier:[["bill","◉ Billing"],["kds","🍳 Kitchen"],["cust","✦ Loyalty"],["rep","◭ Reports"]],
@@ -521,12 +534,12 @@ function render(){
   $("#st").title=sb?("Cloud Sync · "+activeOutlet):"Local Mode";
   $("#st").className="pill"+(sb?"":" l");
   $("#roleChip").style.display="inline-block";
-  $("#roleChip").textContent=`${myRole.toUpperCase()} ▾`;
-  $("#roleChip").title=`${activeName} (${myRole})`;
+  $("#roleChip").textContent=`${(myRole==="coadmin"?"CO-ADMIN":myRole.replace("_"," ").toUpperCase())} ▾`;
+  $("#roleChip").title=`${activeName} (${ROLE_LABELS[myRole]||myRole})`;
   $("#btnLang").textContent=lang==="hi"?"हिं":"EN";
   $("#btnOut").style.display=sb&&user?"inline-block":"none";
-  $("#nav").innerHTML=tabs.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${lang==="hi"&&HI[k]?l.replace(/^[◉🍳☰📦✦⚡◭⚙⌘]\s*/,"$&".slice(0,2))+HI[k]:l}</button>`).join("");
-  const views={bill:vBill,kds:vKds,menu:vMenu,stock:()=>window.vStock(),cust:()=>window.vCust(),ops:()=>window.vOps(),rep:vRep,cfg:vCfg,saas:vSaas};
+  $("#nav").innerHTML=tabs.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${lang==="hi"&&HI[k]?l.replace(/^[◉🍳☰📦✦⚡◭⚙⌘🐛]\s*/,"$&".slice(0,2))+HI[k]:l}</button>`).join("");
+  const views={bill:vBill,kds:vKds,menu:vMenu,stock:()=>window.vStock(),cust:()=>window.vCust(),ops:()=>window.vOps(),rep:vRep,cfg:vCfg,saas:vSaas,bugs:vBugs};
   $("#v").innerHTML=(views[tab]||vBill)();
   if(tab==="bill"){grid();cart();}
   broadcastDisplay();
@@ -536,7 +549,7 @@ function closeMdl(){$("#mdlHost").innerHTML=""}
 function showMdl(html){$("#mdlHost").innerHTML=`<div class="mdl-bg" onclick="if(event.target===this)closeMdl()"><div class="mdl">${html}</div></div>`}
 
 function requireMgrPin(fn){
-  if(myRole==="superadmin"||myRole==="admin"||myRole==="manager")return fn();
+  if(myRole==="superadmin"||myRole==="coadmin"||myRole==="admin"||myRole==="manager")return fn();
   showMdl(`<b>Manager PIN Required</b><p class="mu">Enter Manager/Admin PIN to approve this action.</p>
     <input id="pinIn" type="password" inputmode="numeric" placeholder="PIN (default 1234)" style="margin:8px 0">
     <div class="tbs"><button class="pri" onclick="verifyMgrPin()">Verify</button><button onclick="closeMdl()">Cancel</button></div>`);
@@ -549,23 +562,25 @@ function verifyMgrPin(){
 
 function openPinSwitch(){
   const pins=S.cfg.staffPins||[];
-  showMdl(`<b>Switch Crew Role / PIN</b>
-    <p class="mu">Current: ${esc(activeName)} (${myRole.toUpperCase()}). ${trueRole==="waiter"||trueRole==="kitchen"?"Enter Manager PIN to elevate.":"Switch view or enter staff PIN:"}</p>
+  const baseRoles=["waiter","kitchen","cashier","manager","admin"];
+  const list=isPlatTeam()?[...new Set([...baseRoles,trueRole,...(trueRole==="superadmin"?["coadmin","qa_tester","bug_checker","support"]:[])])]:baseRoles;
+  showMdl(`<b>Switch Role View / PIN</b>
+    <p class="mu">Logged in as: <b>${esc(activeName)}</b> (${esc(ROLE_LABELS[trueRole]||trueRole)}). Viewing: <b>${esc(ROLE_LABELS[myRole]||myRole)}</b>.</p>
     <div style="margin:8px 0">
-      <label class="mu">Select Role</label>
+      <label class="mu">Preview Role</label>
       <select id="swRole">
-        ${["waiter","kitchen","cashier","manager","admin",...(trueRole==="superadmin"?["superadmin"]:[])].map(r=>`<option value="${r}" ${r===myRole?"selected":""}>${r.toUpperCase()}</option>`).join("")}
+        ${list.map(r=>`<option value="${r}" ${r===myRole?"selected":""}>${esc(ROLE_LABELS[r]||r.toUpperCase())}</option>`).join("")}
       </select>
     </div>
-    <input id="swPin" type="password" inputmode="numeric" placeholder="PIN (Admin/Manager PIN: ${trueRole==='superadmin'||trueRole==='admin'?'your mgrPin':'required for higher role'})" style="margin-bottom:10px">
+    <input id="swPin" type="password" inputmode="numeric" placeholder="PIN (${isPlatAdmin()||trueRole==='admin'?'optional for lower preview':'required for higher role'})" style="margin-bottom:10px">
     ${pins.length?`<div class="tbs">${pins.map((p,i)=>`<button class="sm" onclick="quickPin(${i})">${esc(p.name)} (${p.role})</button>`).join("")}</div>`:""}
     <div class="tbs"><button class="pri" onclick="doPinSwitch()">Switch</button><button onclick="closeMdl()">Close</button></div>`);
 }
 function doPinSwitch(){
   const r=$("#swRole").value,pin=$("#swPin").value;
-  const rank={kitchen:1,waiter:1,cashier:2,manager:3,admin:4,superadmin:5};
-  if((rank[r]||1)>(rank[trueRole]||1)&&pin!==(S.cfg.mgrPin||"1234"))return toast("Manager PIN required for higher role");
-  myRole=r;closeMdl();render();toast("Switched to "+r.toUpperCase());
+  const rank={kitchen:1,waiter:1,cashier:2,manager:3,bug_checker:3,qa_tester:3,support:3,admin:4,coadmin:5,superadmin:6};
+  if(r!==trueRole&&(rank[r]||1)>(rank[trueRole]||1)&&pin!==(S.cfg.mgrPin||"1234"))return toast("Manager PIN required for higher role");
+  myRole=r;closeMdl();render();toast("Switched view to "+(ROLE_LABELS[r]||r.toUpperCase()));
 }
 function quickPin(i){
   const p=S.cfg.staffPins[i];if(!p)return;
@@ -1219,7 +1234,7 @@ function vMenu(){
       <div class="tbs" style="margin:0">
         <button class="pri sm" onclick="openMenuForm()">+ Add Dish</button>
         <button class="ok sm" onclick="openOcrMdl()">📷 Scan Menu (Photo / PDF / QR)</button>
-        ${trueRole==="superadmin"?`<button class="sm" onclick="loadMasterMenu()">✨ Load Master Menu</button>`:""}
+        ${isPlatAdmin()?`<button class="sm" onclick="loadMasterMenu()">✨ Load Master Menu</button>`:""}
         <button class="sm" onclick="openTableQrStandee()">📱 Table QR Menu</button>
         <button class="sm" onclick="dlCsv('menu')">Export CSV</button>
       </div>
@@ -1689,7 +1704,7 @@ function vCfg(){
         <button class="pri sm" onclick="createCrewLogin()">+ Create Crew Login</button>
         <button class="sm" onclick="addLocalPin()">+ Local PIN Only</button>
       </div>
-      ${roleList.filter(r=>r.restaurant_id===activeOutlet).map(r=>`<div class="row">
+      ${roleList.filter(r=>r.restaurant_id===activeOutlet&&!PLATFORM_ROLES.includes(r.role)).map(r=>`<div class="row">
         <span><b>${esc(r.display_name||r.email)}</b> (${esc(r.email)}) <span class="tag">${r.role.toUpperCase()}</span></span>
         <span class="tag ${r.active?"okt":"low"}">${r.active?"Active":"Off"}</span>
       </div>`).join("")}
@@ -1746,18 +1761,77 @@ async function createCrewLogin(customRestId=null,customRestName=null,customCity=
   await loadSaasLists();render();toast("Role assigned to "+email);
 }
 
-// ---------- SUPER ADMIN SAAS CONTROL DECK ----------
+// ---------- SUPER ADMIN SAAS & PLATFORM TEAM CONTROL DECK ----------
 function vSaas(){
-  if(trueRole!=="superadmin")return`<div class="card"><b>Restricted</b><p class="mu">Platform Owner access only.</p></div>`;
+  if(!isPlatTeam())return`<div class="card"><b>Restricted</b><p class="mu">Platform Team access only.</p></div>`;
+  const teamRoles=roleList.filter(u=>PLATFORM_ROLES.includes(u.role));
+  const canEditTeam=isPlatAdmin();
   return `
   <div class="stats">
     <div class="card"><span class="mu">Total Restaurants</span><b>${restList.length}</b></div>
     <div class="card"><span class="mu">Active Outlets</span><b>${restList.filter(r=>r.active).length}</b></div>
-    <div class="card"><span class="mu">Total Staff Logins</span><b>${roleList.length}</b></div>
-    <div class="card"><span class="mu">Current Deck</span><b>${esc(activeOutlet)}</b></div>
+    <div class="card"><span class="mu">Platform Team</span><b>${teamRoles.length}</b></div>
+    <div class="card"><span class="mu">Open Bugs</span><b style="color:${bugList.filter(b=>b.status==="open").length?"var(--wr)":"var(--ok)"}">${bugList.filter(b=>b.status==="open").length}</b></div>
   </div>
+  ${canEditTeam?`<div class="g2">
+    <div class="card"><b>🛡️ Add Platform Backend Team (Website Only)</b>
+      <p class="mu" style="margin:4px 0 8px">Sirf DineLoop backend team ke liye — client restaurants ko nahi dikhega.</p>
+      <div style="display:grid;gap:8px">
+        <div class="g2">
+          <input id="ptEm" placeholder="Team Member Email">
+          <input id="ptNm" placeholder="Display Name (e.g. Partner / QA)">
+        </div>
+        <div class="g2">
+          <input id="ptPw" type="password" placeholder="Password (required for new email)">
+          <select id="ptRole">
+            ${trueRole==="superadmin"?`<option value="coadmin">Co-Admin (Partner Owner)</option>`:""}
+            <option value="qa_tester">QA Tester</option>
+            <option value="bug_checker">Bug Checker</option>
+            <option value="support">Support / Onboarding</option>
+          </select>
+        </div>
+        <button class="pri" onclick="addPlatformMember()">Add / Update Team Member</button>
+      </div>
+      ${trueRole==="superadmin"?`
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--ln)">
+        <b style="color:var(--wn)">👑 Transfer Primary Ownership (Super Admin)</b>
+        <p class="mu" style="margin:4px 0 8px">Target email <b>Super Admin</b> ban jayegi aur tumhara account <b>Co-Admin</b> ban jayega. Naya Super Admin chahe toh Co-Admin ko rakh ya hata sakta hai.</p>
+        <div class="g2">
+          <input id="trEm" placeholder="New Primary Owner Email">
+          <input id="trPw" type="password" placeholder="Temp Password (if new account)">
+        </div>
+        <div class="g2" style="margin-top:8px">
+          <input id="trNm" placeholder="New Owner Name (optional)">
+          <button class="wr" onclick="transferOwnership()">Transfer Super Admin →</button>
+        </div>
+      </div>`:""}
+    </div>
+
+    <div class="card tw"><b>Platform Backend Team (${teamRoles.length})</b>
+      <table style="margin-top:8px"><tr><th>Email / Name</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+      ${teamRoles.map(u=>{
+        const isSelf=user&&u.user_id===user.id;
+        const protectedSuper=u.role==="superadmin";
+        const canTouch=trueRole==="superadmin"?(!isSelf||!protectedSuper):(trueRole==="coadmin"&&u.role!=="superadmin"&&u.role!=="coadmin");
+        return `<tr>
+          <td><b>${esc(u.display_name||u.email)}</b>${isSelf?` <span class="tag okt">You</span>`:""}<br><small class="mu">${esc(u.email)}</small></td>
+          <td><span class="tag">${esc(ROLE_LABELS[u.role]||u.role)}</span></td>
+          <td><span class="tag ${u.active?"okt":"low"}">${u.active?"Active":"Paused"}</span></td>
+          <td>${canTouch?`
+            <select style="width:auto;padding:3px 6px;font-size:12px" onchange="changeTeamRole('${u.user_id}',this.value)">
+              ${["qa_tester","bug_checker","support",...(trueRole==="superadmin"?["coadmin"]:[])].map(r=>`<option value="${r}" ${u.role===r?"selected":""}>${esc(ROLE_LABELS[r]||r)}</option>`).join("")}
+            </select>
+            <button class="sm" onclick="toggleTeamUser('${u.user_id}',${!u.active})">${u.active?"Pause":"Enable"}</button>
+            <button class="sm wr" onclick="removeTeamUser('${u.user_id}','${esc(u.email)}')">Remove</button>
+          `:`<small class="mu">${protectedSuper?"Primary Owner":"Protected"}</small>`}</td>
+        </tr>`;
+      }).join("")}
+      </table>
+    </div>
+  </div>`:""}
+
   <div class="g2">
-    <div class="card"><b>+ Onboard New Restaurant Client</b>
+    ${canEditTeam?`<div class="card"><b>+ Onboard New Restaurant Client</b>
       <div style="margin-top:8px;display:grid;gap:8px">
         <div class="g2">
           <input id="saId" placeholder="Outlet ID slug (e.g. jaipur-spice)">
@@ -1774,7 +1848,7 @@ function vSaas(){
         <input id="saOwner" placeholder="Owner Display Name">
         <button class="pri" onclick="onboardRest()">Create Restaurant & Owner Login</button>
       </div>
-    </div>
+    </div>`:""}
 
     <div class="card tw"><b>All Client Restaurants (${restList.length})</b>
       <table style="margin-top:8px"><tr><th>Outlet</th><th>Name</th><th>Plan</th><th>Status</th><th>Actions</th></tr>
@@ -1785,15 +1859,15 @@ function vSaas(){
         <td><span class="tag ${r.active?"okt":"low"}">${r.active?"Active":"Paused"}</span></td>
         <td>
           <button class="sm ${activeOutlet===r.id?"on":""}" onclick="switchOutlet('${esc(r.id)}')">Open</button>
-          <button class="sm" onclick="pushMenuToOutlet('${esc(r.id)}')" title="Push current menu to this outlet">Push Menu</button>
-          ${r.plan==="trial"?`<button class="sm ok" onclick="upgradeRestPro('${esc(r.id)}')">Make Pro</button>`:""}
-          <button class="sm ${r.active?"wr":"ok"}" onclick="toggleRest('${esc(r.id)}',${!r.active})">${r.active?"Pause":"Enable"}</button>
+          ${canEditTeam?`<button class="sm" onclick="pushMenuToOutlet('${esc(r.id)}')" title="Push current menu to this outlet">Push Menu</button>`:""}
+          ${canEditTeam&&r.plan==="trial"?`<button class="sm ok" onclick="upgradeRestPro('${esc(r.id)}')">Make Pro</button>`:""}
+          ${canEditTeam?`<button class="sm ${r.active?"wr":"ok"}" onclick="toggleRest('${esc(r.id)}',${!r.active})">${r.active?"Pause":"Enable"}</button>`:""}
         </td>
       </tr>`).join("")}
       </table>
     </div>
   </div>
-  <div class="card tw"><b>Demo Leads from Website (${demoLeads.length})</b>
+  ${(isPlatAdmin()||trueRole==="support")?`<div class="card tw"><b>Demo Leads from Website (${demoLeads.length})</b>
     <table style="margin-top:8px"><tr><th>Name</th><th>Restaurant</th><th>City</th><th>Mobile</th><th>Status</th><th>Actions</th></tr>
     ${demoLeads.map(l=>`<tr>
       <td><b>${esc(l.name)}</b></td><td>${esc(l.restaurant_name)} (${l.outlets||1})</td><td>${esc(l.city)}</td><td>${esc(l.phone)}</td>
@@ -1804,12 +1878,234 @@ function vSaas(){
       </td>
     </tr>`).join("")||`<tr><td colspan="6" class="mu">No demo requests yet.</td></tr>`}
     </table>
-  </div>
+  </div>`:""}
   <div class="card tw"><b>All Users Across Platform (${roleList.length})</b>
     <table style="margin-top:8px"><tr><th>Email</th><th>Name</th><th>Outlet</th><th>Role</th><th>Status</th></tr>
-    ${roleList.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.display_name)}</td><td>${esc(u.restaurant_id)}</td><td><span class="tag">${esc(u.role)}</span></td><td>${u.active?"Active":"Disabled"}</td></tr>`).join("")}
+    ${roleList.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.display_name)}</td><td>${esc(u.restaurant_id)}</td><td><span class="tag">${esc(ROLE_LABELS[u.role]||u.role)}</span></td><td>${u.active?"Active":"Disabled"}</td></tr>`).join("")}
     </table>
   </div>`;
+}
+
+async function addPlatformMember(){
+  const email=($("#ptEm").value||"").trim().toLowerCase(),name=($("#ptNm").value||"").trim(),pw=($("#ptPw").value||"").trim(),role=$("#ptRole").value;
+  if(!email)return toast("Email required");
+  if(!sb)return toast("Requires Cloud Mode");
+  const r=await sb.functions.invoke("manage-users",{body:{action:"create",email,password:pw||undefined,restaurant_id:"main",role,display_name:name}});
+  if(r.error||!r.data?.ok){
+    const msgErr=(r.data&&r.data.error)||(r.error&&r.error.message)||"";
+    if(!pw){
+      const rpc=await sb.rpc("assign_user_by_email",{p_email:email,p_restaurant_id:"main",p_role:role,p_name:name,p_pin:"1234"});
+      if(rpc.error)return toast(rpc.error.message);
+    }else return toast(msgErr||"Failed to add member");
+  }
+  await loadSaasLists();render();toast("Added "+email+" as "+(ROLE_LABELS[role]||role));
+}
+async function transferOwnership(){
+  const email=($("#trEm").value||"").trim().toLowerCase(),pw=($("#trPw").value||"").trim(),name=($("#trNm").value||"").trim();
+  if(!email||!email.includes("@"))return toast("Valid new owner email required");
+  if(!confirm(`Transfer Primary Super Admin ownership to ${email}? Your role will change to Co-Admin.`))return;
+  let ok=false,errMsg="";
+  if(sb){
+    const r=await sb.functions.invoke("manage-users",{body:{action:"transfer_ownership",email,password:pw||undefined,display_name:name}});
+    if(!r.error&&r.data?.ok)ok=true;
+    else{
+      errMsg=(r.data&&r.data.error)||(r.error&&r.error.message)||"";
+      if(!pw){
+        const rpc=await sb.rpc("transfer_superadmin",{p_target_email:email});
+        if(!rpc.error&&rpc.data?.ok)ok=true;
+        else if(rpc.error)errMsg=rpc.error.message;
+      }
+    }
+  }
+  if(!ok)return toast(errMsg||"Transfer failed");
+  trueRole="coadmin";myRole="coadmin";
+  await loadSaasLists();render();
+  toast("Ownership transferred to "+email+"! Your role is now Co-Admin.");
+}
+async function changeTeamRole(userId,role){
+  const r=await sb.functions.invoke("manage-users",{body:{action:"set_role",user_id:userId,role}});
+  if(r.error||!r.data?.ok)return toast((r.data&&r.data.error)||(r.error&&r.error.message)||"Failed");
+  await loadSaasLists();render();toast("Updated role to "+(ROLE_LABELS[role]||role));
+}
+async function toggleTeamUser(userId,active){
+  const r=await sb.functions.invoke("manage-users",{body:{action:"toggle",user_id:userId,active}});
+  if(r.error||!r.data?.ok)return toast((r.data&&r.data.error)||(r.error&&r.error.message)||"Failed");
+  await loadSaasLists();render();toast(active?"Team access enabled":"Team access paused");
+}
+async function removeTeamUser(userId,email){
+  if(!confirm("Remove platform access for "+email+"?"))return;
+  const r=await sb.functions.invoke("manage-users",{body:{action:"delete_role",user_id:userId}});
+  if(r.error||!r.data?.ok)return toast((r.data&&r.data.error)||(r.error&&r.error.message)||"Failed");
+  await loadSaasLists();render();toast("Removed "+email);
+}
+
+// ---------- AUTOMATED QA BOT, SCREENSHOT CATCHER & BUG MONITOR ----------
+let _lastErrAt=0,_lastErrMsg="";
+function makeStatusSnapshotCanvas(note){
+  const cv=document.createElement("canvas");cv.width=720;cv.height=360;
+  const cx=cv.getContext("2d");
+  cx.fillStyle="#111318";cx.fillRect(0,0,720,360);
+  cx.fillStyle="#e2b75c";cx.font="bold 22px system-ui";cx.fillText("DineLoop Auto Snapshot",24,42);
+  cx.fillStyle="#9ca3af";cx.font="14px monospace";
+  cx.fillText("Time: "+new Date().toLocaleString("en-IN"),24,72);
+  cx.fillText("Outlet: "+activeOutlet+" | Tab: "+tab+" | Role: "+myRole,24,96);
+  cx.fillText("URL: "+location.href.slice(0,75),24,120);
+  cx.fillStyle="#fca5a5";cx.font="15px monospace";
+  String(note||"").slice(0,260).match(/.{1,62}/g)?.forEach((ln,i)=>cx.fillText(ln,24,165+i*24));
+  return cv.toDataURL("image/jpeg",0.72);
+}
+async function captureBugShot(note=""){
+  try{
+    if(!window.html2canvas){
+      await new Promise((res,rej)=>{
+        const s=document.createElement("script");
+        s.src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+        s.onload=res;s.onerror=rej;setTimeout(rej,2500);
+        document.head.appendChild(s);
+      });
+    }
+    if(window.html2canvas){
+      const canvas=await window.html2canvas(document.body,{scale:0.65,useCORS:true,logging:false,backgroundColor:"#111318"});
+      return canvas.toDataURL("image/jpeg",0.65);
+    }
+  }catch(e){}
+  try{return makeStatusSnapshotCanvas(note);}catch(e){return "";}
+}
+async function submitBugReport(payload){
+  if(!sb||!user)return null;
+  const r=await sb.functions.invoke("bug-alert",{body:Object.assign({restaurant_id:activeOutlet,page_url:location.href},payload)});
+  if(r.error||!r.data?.ok){
+    const ins=await sb.from("bug_reports").insert({
+      restaurant_id:activeOutlet,reporter_email:user.email||"",reporter_role:trueRole,
+      source:payload.source||"auto",severity:payload.severity||"error",
+      title:String(payload.title||"Error").slice(0,240),details:String(payload.details||""),
+      page_url:location.href,screenshot_data:payload.screenshot_data||"",status:"open"
+    }).select("id").single();
+    return {ok:!ins.error,bug_id:ins.data?.id,emailed:false,email_hint:"Saved directly to DB (deploy bug-alert function for AI + email)."};
+  }
+  return r.data;
+}
+window.addEventListener("error",e=>{
+  if(!sb||!user)return;
+  const msg=(e.message||"Script Error").slice(0,200);
+  if(msg===_lastErrMsg&&Date.now()-_lastErrAt<30000)return;
+  _lastErrAt=Date.now();_lastErrMsg=msg;
+  captureBugShot(msg).then(shot=>submitBugReport({
+    source:"auto",severity:"error",title:msg,
+    details:`${e.filename||""}:${e.lineno||0}:${e.colno||0}\n${e.error?.stack||""}`,screenshot_data:shot
+  }));
+});
+window.addEventListener("unhandledrejection",e=>{
+  if(!sb||!user)return;
+  const msg=String(e.reason?.message||e.reason||"Promise Rejection").slice(0,200);
+  if(msg===_lastErrMsg&&Date.now()-_lastErrAt<30000)return;
+  _lastErrAt=Date.now();_lastErrMsg=msg;
+  captureBugShot(msg).then(shot=>submitBugReport({
+    source:"auto",severity:"error",title:msg,
+    details:String(e.reason?.stack||e.reason||""),screenshot_data:shot
+  }));
+});
+
+function vBugs(){
+  if(!isPlatTeam())return`<div class="card"><b>Restricted</b><p class="mu">Platform QA & Bug Monitor access only.</p></div>`;
+  return `
+  <div class="card">
+    <div class="row" style="border:0;padding:0">
+      <div><b>🤖 Automated QA Bot & Live Bug Monitor</b><br><small class="mu">Har runtime error + screenshot automatically capture & email hota hai; niche 1-click full scan bhi chala sakte ho.</small></div>
+      <div class="tbs" style="margin:0">
+        <button class="pri sm" onclick="runQaBot(false)" ${qaBusy?"disabled":""}>${qaBusy?"Scanning…":"🤖 Run Auto Bug Check"}</button>
+        <button class="sm" onclick="runQaBot(true)" ${qaBusy?"disabled":""}>📧 Send Test Bug Email + Shot</button>
+        <button class="ok sm" onclick="openManualBugMdl()">📸 Report Bug + Shot</button>
+      </div>
+    </div>
+    ${qaReport.length?`<div style="margin-top:10px;display:grid;gap:6px">
+      ${qaReport.map(x=>`<div class="row" style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.03)">
+        <span>${x.ok?"✅":"❌"} <b>${esc(x.name)}</b></span>
+        <small class="mu">${esc(x.info)}</small>
+      </div>`).join("")}
+    </div>`:""}
+  </div>
+  <div class="card tw"><b>Bug Reports Inbox (${bugList.length})</b>
+    <table style="margin-top:8px"><tr><th>ID / Severity</th><th>Issue & AI Root-Cause</th><th>Source / Outlet</th><th>Screenshot</th><th>Status</th><th>Actions</th></tr>
+    ${bugList.map(b=>`<tr>
+      <td><b>#${b.id}</b><br><span class="tag ${b.severity==="critical"||b.severity==="error"?"low":"okt"}">${esc(b.severity)}</span>${b.emailed?`<br><small class="mu">📧 Emailed</small>`:""}</td>
+      <td style="max-width:340px"><b>${esc(b.title)}</b><br><small class="mu">${esc(String(b.details||"").slice(0,140))}</small>${b.ai_diagnosis?`<div style="margin-top:4px;font-size:12px;color:var(--ac)">🤖 ${esc(b.ai_diagnosis)}</div>`:""}</td>
+      <td>${esc(b.source)}<br><small class="mu">${esc(b.restaurant_id)} · ${new Date(b.created_at).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</small></td>
+      <td>${b.screenshot_data?`<button class="sm" onclick="viewBugShot(${b.id})">View 📸</button>`:`<small class="mu">—</small>`}</td>
+      <td><span class="tag ${b.status==="fixed"?"okt":b.status==="open"?"low":""}">${esc(b.status)}</span></td>
+      <td>
+        <button class="sm ok" onclick="markBug(${b.id},'fixed')">Fixed</button>
+        <button class="sm" onclick="markBug(${b.id},'investigating')">Checking</button>
+      </td>
+    </tr>`).join("")||`<tr><td colspan="6" class="mu" style="text-align:center;padding:18px">No bugs reported yet! System healthy.</td></tr>`}
+    </table>
+  </div>`;
+}
+async function runQaBot(sendTestAlert=false){
+  qaBusy=true;qaReport=[];render();
+  const checks=[];
+  for(const path of ["/","/waiter.html","/order.html","/display.html","/landing.js","/crm.js","/erp.js","/platform.js"]){
+    try{
+      const r=await fetch(path,{method:"HEAD",cache:"no-store"});
+      checks.push({name:"Asset "+path,ok:r.ok,info:"HTTP "+r.status});
+    }catch(e){checks.push({name:"Asset "+path,ok:false,info:String(e)});}
+  }
+  try{
+    const r=await sb.from("restaurants").select("id,active").limit(50);
+    checks.push({name:"Supabase DB (restaurants)",ok:!r.error,info:r.error?r.error.message:(r.data?.length||0)+" outlets OK"});
+  }catch(e){checks.push({name:"Supabase DB",ok:false,info:String(e)});}
+  try{
+    const prev=tb,bak=S.open[prev];
+    const tmp=[{id:-999,n:"QA Item",p:100,q:2,g:5}];S.open.__qa=tmp;
+    const c=calc("__qa");delete S.open.__qa;
+    const ok=c.sub===200&&c.tot>=200;
+    checks.push({name:"Billing & GST Formula",ok,info:`Sub ₹${c.sub}, Tax ₹${c.tax}, Tot ₹${c.tot}`});
+  }catch(e){checks.push({name:"Billing & GST Formula",ok:false,info:String(e)});}
+  qaReport=checks;
+  const fails=checks.filter(x=>!x.ok);
+  if(fails.length||sendTestAlert){
+    const shot=await captureBugShot(fails.length?fails.map(f=>f.name+": "+f.info).join("; "):"QA Bot Test Alert");
+    const res=await submitBugReport({
+      source:"qa_bot",
+      severity:fails.length?"error":"info",
+      title:fails.length?`QA Bot found ${fails.length} issue(s)`:`QA Bot Health Check (${checks.length}/${checks.length} Passed)`,
+      details:checks.map(x=>`${x.ok?"PASS":"FAIL"} | ${x.name} | ${x.info}`).join("\n"),
+      screenshot_data:shot,
+      send_email:true
+    });
+    if(res?.email_hint)toast(res.email_hint);
+    else toast(res?.emailed?"Bug alert emailed with screenshot!":"Logged #"+res?.bug_id);
+  }else{
+    toast(`All ${checks.length} QA checks passed!`);
+  }
+  qaBusy=false;await loadSaasLists();render();
+}
+function openManualBugMdl(){
+  showMdl(`<b>📸 Log Bug Report + Auto Screenshot</b>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <input id="bgTit" placeholder="Bug Title (e.g. Print button alignment issue)">
+      <select id="bgSev"><option value="error">Error (Sends Email Alert)</option><option value="critical">Critical (Urgent Email)</option><option value="warning">Warning</option></select>
+      <textarea id="bgDet" rows="3" placeholder="Steps to reproduce or extra notes..."></textarea>
+    </div>
+    <div class="tbs"><button class="pri" onclick="sendManualBug()">Capture Screenshot & Report</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+async function sendManualBug(){
+  const title=$("#bgTit").value.trim(),details=$("#bgDet").value.trim(),severity=$("#bgSev").value;
+  if(!title)return toast("Enter bug title");
+  closeMdl();toast("Capturing screenshot & sending...");
+  const shot=await captureBugShot(title);
+  const res=await submitBugReport({source:"manual",severity,title,details,screenshot_data:shot,send_email:true});
+  await loadSaasLists();render();
+  toast(res?.emailed?"Bug emailed with screenshot!":(res?.email_hint||"Bug saved #"+res?.bug_id));
+}
+async function markBug(id,st){
+  const r=await sb.from("bug_reports").update({status:st}).eq("id",id);
+  if(r.error)return toast(r.error.message);
+  await loadSaasLists();render();toast("Bug #"+id+" marked "+st);
+}
+function viewBugShot(id){
+  const b=bugList.find(x=>x.id===id);if(!b||!b.screenshot_data)return;
+  showMdl(`<b>📸 Screenshot · Bug #${b.id}</b><p class="mu">${esc(b.title)}</p><img src="${b.screenshot_data}" style="width:100%;border-radius:8px;border:1px solid var(--ln);margin:8px 0"><button class="pri" onclick="closeMdl()">Close</button>`);
 }
 async function onboardRest(){
   const id=$("#saId").value.trim().toLowerCase().replace(/[^a-z0-9-_]/g,"-");

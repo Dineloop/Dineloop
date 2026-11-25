@@ -127,7 +127,7 @@ let tb="T1",cat="All",q="";
 
 function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display="none",2500)}
 const M=id=>S.menu.find(x=>x.id==id);
-const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
+const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
 
 function save(){
   try{localStorage.setItem("dl2_"+activeOutlet,JSON.stringify(S));}catch(e){}
@@ -240,7 +240,15 @@ function pickAdd(id){
 function pushLine(id,v,adds,note){
   const o=S.open[tb]=S.open[tb]||[],key=v+"|"+adds.join(",")+"|"+note;
   const l=o.find(x=>x.id==id&&(x.v||"")+"|"+(x.add||[]).join(",")+"|"+(x.note||"")===key);
-  l?l.q++:o.push({id,q:1,sent:0,v,add:adds,note});save();render();
+  l?l.q++:o.push({id,q:1,sent:0,v,add:adds,note});
+  const mt=meta(tb);if(!mt.occ){mt.occ=true;mt.updatedAt=Date.now();if(!mt.pax)mt.pax=2;}mt.waiterName=activeName;
+  save();render();
+}
+function setOcc(paxVal){
+  const mt=meta(tb);
+  if(paxVal<=0){if((S.open[tb]||[]).length)return toast("Clear order first");mt.occ=false;mt.pax=0;mt.waiterName="";mt.updatedAt=0;}
+  else{mt.occ=true;mt.pax=paxVal;mt.waiterName=activeName;mt.updatedAt=Date.now();}
+  save();render();
 }
 function chg(i,d){
   const o=S.open[tb];if(!o||!o[i])return;
@@ -267,11 +275,11 @@ function pay(m){
   const invNo=(S.cfg.invPrefix||"DL-")+String(S.cfg.invNext||1).padStart(4,"0");S.cfg.invNext=(S.cfg.invNext||1)+1;
   S.bills.push({no:S.bills.length+1,invNo,t:Date.now(),table:tb,mode:c.mt.mode,items:c.o.map(l=>({n:itemLabel(l),q:l.q,p:itemUnitPrice(l)})),sub:c.sub,disc:c.disc,tax:c.tax,tot:c.due,pay:m,payLabel:m,ph:"",cashier:activeName+" (Waiter)"});
   if(!c.paidAmt)c.o.forEach(l=>{const d=M(l.id),s=S.stock.find(x=>x.n===d.s);if(s)s.q=R(Math.max(0,s.q-d.u*l.q));});
-  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
+  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
   save();render();toast("Collected ₹"+c.due+" ("+invNo+")");
 }
 function clearTable(){
-  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
+  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
   save();render();toast(tb+" cleared");
 }
 
@@ -308,9 +316,17 @@ function render(){
     </div>
     <div class="tgrid">${TB.map(t=>{
       const tc=calc(t),cnt=tc.o.reduce((a,l)=>a+l.q,0);
-      let subTxt="Free";if(cnt)subTxt=tc.mt.prepaid?(tc.due>0?`Due ₹${tc.due}`:`✓ Paid`):`Unpaid ₹${tc.due}`;
-      return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${t}';render()"><b>${t}</b><small style="color:${t===tb?"inherit":cnt?(tc.mt.prepaid&&tc.due===0?"var(--ok)":"var(--wr)"):"var(--mu)"}">${subTxt}</small></button>`;
+      let subTxt="Free";
+      if(cnt)subTxt=tc.mt.prepaid?(tc.due>0?`Due ₹${tc.due}`:`✓ Paid`):`Unpaid ₹${tc.due}`;
+      else if(tc.mt.occ)subTxt=`🪑 ${tc.mt.pax||1} Seated`;
+      const clr=cnt?(tc.mt.prepaid&&tc.due===0?"var(--ok)":"var(--wr)"):(tc.mt.occ?"var(--wn)":"var(--mu)");
+      return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${t}';render()"><b>${t}</b><small style="color:${t===tb?"inherit":clr}">${subTxt}</small></button>`;
     }).join("")}</div>
+    <div class="tbs" style="margin-top:9px;margin-bottom:0">
+      <span class="mu">Guests at ${esc(tb)}:</span>
+      ${[1,2,3,4,6,8].map(n=>`<button class="sm ${mt.occ&&mt.pax===n?"on":""}" onclick="setOcc(${n})">🪑 ${n}</button>`).join("")}
+      ${mt.occ&&!c.o.length?`<button class="sm wr" onclick="setOcc(0)">Free Table</button>`:""}
+    </div>
   </div>
   <div class="g2">
     <div class="card"><b>2. Tap Dish for ${esc(tb)}</b>

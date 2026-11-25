@@ -317,7 +317,7 @@ function allowedTabs(){return ROLE_TABS[myRole]||ROLE_TABS.admin}
 function go(k){tab=k;render()}
 const M=id=>S.menu.find(x=>x.id==id);
 const seg=c=>(Date.now()-(c.last||0))/864e5>=LD?"Lapsed":c.visits>=3?"Regular":"New";
-const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
+const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
 
 function render(){
   if(myRole==="waiter")return waiterRedirectScreen();
@@ -467,7 +467,8 @@ function pushLine(id,t,v,adds,note){
   const key=v+"|"+adds.join(",")+"|"+(note||"");
   const l=o.find(x=>x.id==id&&(x.v||"")+"|"+(x.add||[]).join(",")+"|"+(x.note||"")===key);
   l?l.q++:o.push({id,q:1,sent:0,v:v||"",add:adds,note:note||""});
-  save();if(tab==="bill"){cart();renderTabsOnly();}else if(tab==="waiter"){render();}
+  const mt=meta(t);if(!mt.occ){mt.occ=true;mt.updatedAt=Date.now();}if(!mt.waiterName)mt.waiterName=activeName;
+  save();if(tab==="bill"){cart();renderTabsOnly();}
 }
 function openItemPicker(id,t){
   const m=M(id);if(!m)return;
@@ -497,15 +498,21 @@ function renderTabsOnly(){
   const el=$("#tbBar");if(!el)return;
   el.innerHTML=TB.map(t=>{
     const c=calc(t),cnt=c.o.reduce((a,l)=>a+l.q,0);
-    const badge=c.mt.prepaid?(c.due>0?` 🟡₹${c.due}`:` ✓${c.mt.prepaidCode}`):(cnt?` (${cnt})`:"");
+    const paxTxt=c.mt.occ?` 🪑${c.mt.pax||""}`:"";
+    const badge=c.mt.prepaid?(c.due>0?` 🟡₹${c.due}`:` ✓${c.mt.prepaidCode}`):(cnt?` (${cnt})`:paxTxt);
     return `<button class="${t==tb?"on":""}" onclick="tb='${t}';render()">${t}${badge}</button>`;
   }).join("");
+}
+function toggleTableOcc(t){
+  const mt=meta(t);mt.occ=!mt.occ;if(mt.occ){mt.updatedAt=Date.now();mt.waiterName=mt.waiterName||activeName;if(!mt.pax)mt.pax=2;}else mt.pax=0;
+  save();render();
 }
 
 // ---------- BILLING VIEW (RECEPTION / CASHIER / ADMIN) ----------
 function vBill(){
   const cats=["All",...new Set(S.menu.map(m=>m.c||"Mains"))];
   const mt=meta(tb);
+  const busyCnt=TB.filter(t=>meta(t).occ||(S.open[t]||[]).length>0).length;
   return `<div class="g2">
     <div class="card">
       <div class="row" style="border:0;padding:0"><b>Menu</b><span class="mu">F2 Search · F8 KOT · F4 Cash</span></div>
@@ -514,12 +521,16 @@ function vBill(){
       <div class="menu" id="grid"></div>
     </div>
     <div class="card">
-      <div class="row" style="border:0;padding:0"><b>Order · ${esc(tb)}</b>
+      <div class="row" style="border:0;padding:0"><b>Order · ${esc(tb)} <span class="tag">${busyCnt}/${TB.length} Busy</span></b>
         <div class="tbs" style="margin:0">
           ${["Dine-In","Parcel","Delivery"].map(md=>`<button class="sm ${mt.mode===md?"on":""}" onclick="meta('${esc(tb)}').mode='${md}';save();render()">${md}</button>`).join("")}
         </div>
       </div>
       <div class="tbs" id="tbBar" style="margin-top:8px"></div>
+      <div class="row" style="background:rgba(226,183,92,.08);padding:6px 9px;border-radius:9px;margin-bottom:8px;border:0">
+        <span style="font-size:13px">${mt.occ||((S.open[tb]||[]).length)?`🪑 <b style="color:var(--wn)">Occupied</b>${mt.pax?` (${mt.pax} Guests)`:""}${mt.waiterName?` · Waiter: <b>${esc(mt.waiterName)}</b>`:""}${mt.updatedAt?` · ${new Date(mt.updatedAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}`:""}`:`<span class="mu">🪑 Table Free (No guests seated)</span>`}</span>
+        ${!(S.open[tb]||[]).length?`<button class="sm" onclick="toggleTableOcc('${esc(tb)}')">${mt.occ?"Mark Free":"Mark Seated"}</button>`:""}
+      </div>
       <div id="cart"></div>
       <div style="margin-top:10px">
         <input placeholder="Guest mobile (10 digits) for loyalty & WhatsApp" inputmode="numeric" maxlength="10" value="${esc(ph)}" oninput="ph=this.value.replace(/\\D/g,'');cart()">
@@ -675,7 +686,7 @@ function collectPrepaid(m){
   toast(`Prepaid ₹${c.due} · Verify Code: ${code}`);
 }
 function clearTable(t=tb){
-  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
+  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
   rd=false;ph="";nmv="";op=false;save();render();toast(t+" cleared for next guest");
 }
 function recordBill(m,t,splits,chargeAmt,isPrepaid,preCode=""){
@@ -713,7 +724,7 @@ function pay(m,t=tb,splits=null){
   if(c.due<=0){clearTable(t);return;}
   kot(true,t);
   recordBill(m,t,splits,c.due,false,"");
-  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
+  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
   rd=false;ph="";nmv="";op=false;
   save();toast("Paid ₹"+c.due);render();
 }

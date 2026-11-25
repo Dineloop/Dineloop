@@ -116,7 +116,7 @@ function cycleTheme(){
 }
 
 function defaultCfg(){return{rName:"DINELOOP",taxPct:5,taxInc:false,invPrefix:"DL-",invNext:1,svcPct:0,pkgFee:0,delFee:0,upiId:"",upiName:"",bankInfo:"",staticQr:"",waiterCanPay:true,mgrPin:"1234"};}
-function seed(){return{menu:[{id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0,g:null,v:[],a:[],oos:false},{id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0,g:null,v:[],a:[],oos:false}],stock:[],cust:{},bills:[],kots:[],open:{},openMeta:{},kn:0,cfg:defaultCfg()};}
+function seed(){return{menu:[],stock:[],cust:{},bills:[],kots:[],open:{},openMeta:{},kn:0,cfg:defaultCfg()};}
 function normState(x){
   const d=seed(),s=(x&&typeof x==="object")?x:{};
   s.menu=Array.isArray(s.menu)?s.menu:d.menu;s.stock=Array.isArray(s.stock)?s.stock:[];

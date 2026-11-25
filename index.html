@@ -143,19 +143,150 @@ function defaultCfg(){
     googleReviewUrl:"",webhookUrl:"",ownerPh:"",deliveryZones:[],journeys:{welcome:true,thankyou:true,bday:true}
   };
 }
-function seed(){
+const MASTER_MENU_DATA=[
+  // South Indian
+  {n:"Masala Dosa",p:120,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Plain Dosa",p:90,c:"South Indian",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Rava Masala Dosa",p:140,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Mysore Masala Dosa",p:150,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Cheese Masala Dosa",p:160,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Idli Sambar (2 Pcs)",p:70,c:"South Indian",st:"Main Kitchen",prep:8,diet:"veg"},
+  {n:"Medu Vada (2 Pcs)",p:80,c:"South Indian",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Onion Uttapam",p:110,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Paneer Uttapam",p:140,c:"South Indian",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Filter Coffee",p:50,c:"South Indian",st:"Beverage",prep:5,diet:"veg"},
+  // Starters & Tandoor
+  {n:"Paneer Tikka",p:260,c:"Starters & Tandoor",st:"Tandoor",prep:15,diet:"veg"},
+  {n:"Malai Paneer Tikka",p:280,c:"Starters & Tandoor",st:"Tandoor",prep:15,diet:"veg"},
+  {n:"Hara Bhara Kabab",p:210,c:"Starters & Tandoor",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Veg Seekh Kabab",p:220,c:"Starters & Tandoor",st:"Tandoor",prep:14,diet:"veg"},
+  {n:"Mushroom Tikka",p:240,c:"Starters & Tandoor",st:"Tandoor",prep:14,diet:"veg"},
+  {n:"Soya Chaap Tikka",p:230,c:"Starters & Tandoor",st:"Tandoor",prep:15,diet:"veg"},
+  {n:"Crispy Corn Salt & Pepper",p:190,c:"Starters & Tandoor",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Dahi Ke Sholay",p:220,c:"Starters & Tandoor",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Chicken Tikka",p:310,c:"Starters & Tandoor",st:"Tandoor",prep:16,diet:"nonveg"},
+  {n:"Tandoori Chicken (Half)",p:290,c:"Starters & Tandoor",st:"Tandoor",prep:18,diet:"nonveg"},
+  {n:"Tandoori Chicken (Full)",p:520,c:"Starters & Tandoor",st:"Tandoor",prep:22,diet:"nonveg"},
+  {n:"Chicken Malai Tikka",p:330,c:"Starters & Tandoor",st:"Tandoor",prep:16,diet:"nonveg"},
+  {n:"Mutton Seekh Kabab",p:360,c:"Starters & Tandoor",st:"Tandoor",prep:18,diet:"nonveg"},
+  {n:"Fish Amritsari",p:340,c:"Starters & Tandoor",st:"Main Kitchen",prep:15,diet:"nonveg"},
+  // North Indian Mains
+  {n:"Paneer Butter Masala",p:270,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Kadai Paneer",p:260,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Shahi Paneer",p:260,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Palak Paneer",p:250,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Matar Paneer",p:240,c:"North Indian Mains",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Dal Makhani",p:220,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Dal Tadka",p:180,c:"North Indian Mains",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Mix Veg",p:210,c:"North Indian Mains",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Malai Kofta",p:260,c:"North Indian Mains",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Chole Masala",p:190,c:"North Indian Mains",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Rajma Masala",p:190,c:"North Indian Mains",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Butter Chicken",p:340,c:"North Indian Mains",st:"Main Kitchen",prep:18,diet:"nonveg"},
+  {n:"Kadai Chicken",p:330,c:"North Indian Mains",st:"Main Kitchen",prep:18,diet:"nonveg"},
+  {n:"Mutton Rogan Josh",p:390,c:"North Indian Mains",st:"Main Kitchen",prep:22,diet:"nonveg"},
+  // Breads
+  {n:"Tandoori Roti",p:25,c:"Breads",st:"Tandoor",prep:6,diet:"veg"},
+  {n:"Butter Tandoori Roti",p:35,c:"Breads",st:"Tandoor",prep:6,diet:"veg"},
+  {n:"Plain Naan",p:45,c:"Breads",st:"Tandoor",prep:7,diet:"veg"},
+  {n:"Butter Naan",p:55,c:"Breads",st:"Tandoor",prep:7,diet:"veg"},
+  {n:"Garlic Naan",p:70,c:"Breads",st:"Tandoor",prep:8,diet:"veg"},
+  {n:"Cheese Garlic Naan",p:95,c:"Breads",st:"Tandoor",prep:9,diet:"veg"},
+  {n:"Laccha Paratha",p:55,c:"Breads",st:"Tandoor",prep:8,diet:"veg"},
+  {n:"Aloo Kulcha",p:75,c:"Breads",st:"Tandoor",prep:9,diet:"veg"},
+  {n:"Tawa Roti",p:20,c:"Breads",st:"Main Kitchen",prep:5,diet:"veg"},
+  // Rice & Biryani
+  {n:"Steamed Basmati Rice",p:130,c:"Rice & Biryani",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Jeera Rice",p:150,c:"Rice & Biryani",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Veg Pulao",p:190,c:"Rice & Biryani",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Veg Dum Biryani",p:240,c:"Rice & Biryani",st:"Main Kitchen",prep:16,diet:"veg"},
+  {n:"Paneer Tikka Biryani",p:270,c:"Rice & Biryani",st:"Main Kitchen",prep:18,diet:"veg"},
+  {n:"Egg Biryani",p:250,c:"Rice & Biryani",st:"Main Kitchen",prep:16,diet:"egg"},
+  {n:"Chicken Dum Biryani",p:310,c:"Rice & Biryani",st:"Main Kitchen",prep:20,diet:"nonveg"},
+  {n:"Mutton Dum Biryani",p:380,c:"Rice & Biryani",st:"Main Kitchen",prep:22,diet:"nonveg"},
+  {n:"Curd Rice",p:140,c:"Rice & Biryani",st:"Main Kitchen",prep:10,diet:"veg"},
+  // Chinese & Fast Food
+  {n:"Veg Hakka Noodles",p:180,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Schezwan Noodles",p:195,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Veg Fried Rice",p:175,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Veg Manchurian",p:195,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Chilli Paneer Dry",p:240,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Honey Chilli Potato",p:180,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Veg Spring Roll",p:160,c:"Chinese & Fast Food",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Veg Steamed Momos (8 Pcs)",p:120,c:"Chinese & Fast Food",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Paneer Kurkure Momos",p:160,c:"Chinese & Fast Food",st:"Main Kitchen",prep:12,diet:"veg"},
+  {n:"Chilli Chicken Dry",p:270,c:"Chinese & Fast Food",st:"Main Kitchen",prep:14,diet:"nonveg"},
+  {n:"Chicken Fried Rice",p:220,c:"Chinese & Fast Food",st:"Main Kitchen",prep:14,diet:"nonveg"},
+  {n:"Crispy Veg Burger",p:110,c:"Chinese & Fast Food",st:"Main Kitchen",prep:8,diet:"veg"},
+  {n:"Peri Peri French Fries",p:110,c:"Chinese & Fast Food",st:"Main Kitchen",prep:8,diet:"veg"},
+  {n:"Pav Bhaji",p:140,c:"Chinese & Fast Food",st:"Main Kitchen",prep:10,diet:"veg"},
+  // Pizza, Pasta & Cafe
+  {n:"Margherita Pizza",p:220,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Farmhouse Veg Pizza",p:290,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Paneer Makhani Pizza",p:310,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:15,diet:"veg"},
+  {n:"Chicken Tikka Pizza",p:340,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:16,diet:"nonveg"},
+  {n:"White Sauce Alfredo Pasta",p:240,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Red Sauce Arrabbiata Pasta",p:230,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Pink Sauce Mix Pasta",p:250,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:14,diet:"veg"},
+  {n:"Veg Grilled Club Sandwich",p:160,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Paneer Tikka Sandwich",p:180,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:10,diet:"veg"},
+  {n:"Cheese Garlic Bread",p:140,c:"Pizza, Pasta & Cafe",st:"Main Kitchen",prep:8,diet:"veg"},
+  // Bakery & Desserts
+  {n:"Gulab Jamun (2 Pcs)",p:70,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"veg"},
+  {n:"Rasmalai (2 Pcs)",p:110,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"veg"},
+  {n:"Moong Dal Halwa",p:140,c:"Bakery & Desserts",st:"Dessert",prep:8,diet:"veg"},
+  {n:"Sizzling Brownie Ice Cream",p:190,c:"Bakery & Desserts",st:"Dessert",prep:10,diet:"veg"},
+  {n:"Chocolate Truffle Pastry",p:120,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"egg"},
+  {n:"Red Velvet Pastry",p:130,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"egg"},
+  {n:"Blueberry Cheesecake Slice",p:180,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"veg"},
+  {n:"Butter Croissant",p:110,c:"Bakery & Desserts",st:"Dessert",prep:5,diet:"veg"},
+  {n:"Choco Lava Cake",p:120,c:"Bakery & Desserts",st:"Dessert",prep:7,diet:"veg"},
+  {n:"Vanilla Ice Cream (2 Scoops)",p:80,c:"Bakery & Desserts",st:"Dessert",prep:4,diet:"veg"},
+  // Beverages & Shakes
+  {n:"Masala Chai",p:40,c:"Beverages & Shakes",st:"Beverage",prep:5,diet:"veg"},
+  {n:"Cappuccino",p:120,c:"Beverages & Shakes",st:"Beverage",prep:6,diet:"veg"},
+  {n:"Cafe Latte",p:130,c:"Beverages & Shakes",st:"Beverage",prep:6,diet:"veg"},
+  {n:"Classic Cold Coffee",p:140,c:"Beverages & Shakes",st:"Beverage",prep:6,diet:"veg"},
+  {n:"Hazelnut Cold Coffee",p:160,c:"Beverages & Shakes",st:"Beverage",prep:6,diet:"veg"},
+  {n:"Fresh Lime Soda",p:80,c:"Beverages & Shakes",st:"Beverage",prep:4,diet:"veg"},
+  {n:"Virgin Mint Mojito",p:130,c:"Beverages & Shakes",st:"Beverage",prep:5,diet:"veg"},
+  {n:"Peach Iced Tea",p:120,c:"Beverages & Shakes",st:"Beverage",prep:5,diet:"veg"},
+  {n:"Sweet / Mango Lassi",p:100,c:"Beverages & Shakes",st:"Beverage",prep:5,diet:"veg"},
+  {n:"Oreo / KitKat Thick Shake",p:170,c:"Beverages & Shakes",st:"Beverage",prep:7,diet:"veg"},
+  {n:"Belgian Chocolate Shake",p:180,c:"Beverages & Shakes",st:"Beverage",prep:7,diet:"veg"},
+  {n:"Mineral Water (1L)",p:20,c:"Beverages & Shakes",st:"Beverage",prep:1,diet:"veg"}
+];
+function masterMenu(){
+  return MASTER_MENU_DATA.map((m,i)=>({id:i,n:m.n,p:m.p,c:m.c,s:"",u:0,g:null,v:[],a:[],oos:false,st:m.st,prep:m.prep,sku:"",hh:true,bom:[],diet:m.diet||"veg"}));
+}
+function mergeMasterMenuInto(state){
+  if(!state||!Array.isArray(state.menu))return false;
+  let changed=false;
+  state.menu.forEach(m=>{
+    if(m.n==="Masala Dosa"&&m.c==="Mains"){m.c="South Indian";changed=true;}
+    if(m.n==="Masala Chai"&&m.c==="Drinks"){m.c="Beverages & Shakes";changed=true;}
+  });
+  const have=new Set(state.menu.map(m=>String(m.n||"").trim().toLowerCase()));
+  let nextId=state.menu.reduce((mx,x)=>Math.max(mx,+x.id||0),-1)+1;
+  masterMenu().forEach(m=>{
+    if(!have.has(m.n.toLowerCase())){
+      state.menu.push(Object.assign({},m,{id:nextId++}));
+      changed=true;
+    }
+  });
+  return changed;
+}
+let activeOutlet=CFG.outlet;
+function seed(outletId=activeOutlet){
   return{
-    menu:[
-      {id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Main Kitchen",prep:12,sku:"",hh:true,bom:[],diet:"veg"},
-      {id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Beverage",prep:5,sku:"",hh:true,bom:[],diet:"veg"}
-    ],
+    menu:outletId==="main"?masterMenu():[],
     stock:[],cust:{},bills:[],kots:[],kotsDone:[],holds:[],open:{},openMeta:{},kn:0,tokenNo:0,tokenDay:"",
     giftCards:[],campaigns:[],feedbacks:[],reservations:[],waitlist:[],suppliers:[],pos:[],wastage:[],expenses:[],shifts:[],riders:[],audit:[],
     cfg:defaultCfg()
   };
 }
-function normState(x){
-  const d=seed(),s=(x&&typeof x==="object")?x:{};
+function normState(x,outletId=activeOutlet){
+  const d=seed(outletId),s=(x&&typeof x==="object")?x:{};
   s.menu=Array.isArray(s.menu)?s.menu.map((m,i)=>({id:m.id??i,n:m.n||"Dish",p:+m.p||0,c:m.c||"Mains",s:m.s||"",u:+m.u||0,g:m.g===0||m.g>0?+m.g:null,v:Array.isArray(m.v)?m.v:[],a:Array.isArray(m.a)?m.a:[],oos:!!m.oos,st:m.st||"Main Kitchen",prep:+m.prep||12,sku:m.sku||"",hh:m.hh!==false,bom:Array.isArray(m.bom)?m.bom:[],combo:Array.isArray(m.combo)?m.combo:[],diet:m.diet||"veg"})):d.menu;
   ["stock","bills","kots","kotsDone","holds","giftCards","campaigns","feedbacks","reservations","waitlist","suppliers","pos","wastage","expenses","shifts","riders","audit"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[];});
   s.cust=(s.cust&&typeof s.cust==="object")?s.cust:{};
@@ -170,11 +301,11 @@ function normState(x){
   return s;
 }
 
-let S=normState(null);
-try{const ls=JSON.parse(localStorage.getItem("dl2")||"null");if(ls)S=normState(ls);}catch(e){}
+let S=normState(null,activeOutlet);
+try{const ls=JSON.parse(localStorage.getItem("dl2")||"null");if(ls)S=normState(ls,activeOutlet);}catch(e){}
 
 let sb=null,user=null,tmr=null,rtCh=null,rtPo=null;
-let myRole="admin",trueRole="admin",activeName="Owner",activeOutlet=CFG.outlet;
+let myRole="admin",trueRole="admin",activeName="Owner";
 let restList=[],roleList=[],restInfo=null,pubOrders=[],demoLeads=[];
 let tab="bill",tb=TB[0]||"T1",q="",cat="All",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed";
 let msg="Hi {name}, we miss you at {rName}! Show this message for a special treat on your next visit.";
@@ -211,8 +342,17 @@ async function loadPubOrders(){
   if(!r.error&&r.data)pubOrders=r.data;
 }
 
+function loadMasterMenu(){
+  const before=S.menu.length;
+  mergeMasterMenuInto(S);
+  S.cfg._masterLoaded=true;
+  save();render();
+  toast(`Master Menu loaded (${S.menu.length} total dishes, +${S.menu.length-before} added)`);
+}
+
 async function loadOutletState(outletId){
   activeOutlet=outletId;
+  cat="All";q="";
   let loaded=null;
   if(sb&&user){
     const r=await sb.from("app_state").select("data").eq("id",outletId).maybeSingle();
@@ -222,9 +362,16 @@ async function loadOutletState(outletId){
   if(!loaded){
     try{loaded=JSON.parse(localStorage.getItem("dl2_"+outletId)||"null");}catch(e){}
   }
-  S=normState(loaded);
+  S=normState(loaded,outletId);
+  if(outletId==="main"&&trueRole==="superadmin"&&!S.cfg._masterLoaded){
+    mergeMasterMenuInto(S);
+    S.cfg._masterLoaded=true;
+    if(sb&&user)save();
+    else{try{localStorage.setItem("dl2_"+activeOutlet,JSON.stringify(S));localStorage.setItem("dl2",JSON.stringify(S));}catch(e){}}
+  }else if(sb&&user&&!loaded){
+    save();
+  }
   tb=TB[0]||"T1";
-  if(sb&&user&&!loaded)save();
   await loadPubOrders();
   subRealtime();
 }
@@ -580,9 +727,9 @@ function vBill(){
           <button class="sm" onclick="openFloorMapMdl()">🗺 Floor (${busyCnt}/${TB.length})</button>
         </div>
       </div>
-      <div class="tbs" style="margin-top:8px">
+      <div class="tbs" id="catBar" style="margin-top:8px">
         <button class="sm ${vegOnly?"ok":""}" onclick="vegOnly=!vegOnly;render()">🟢 Veg Only</button>
-        ${cats.map(c=>`<button class="sm ${cat===c?"on":""}" onclick="cat='${esc(c)}';grid()">${esc(c)}</button>`).join("")}
+        ${cats.map(c=>`<button class="sm cat-btn ${cat===c?"on":""}" data-cat="${esc(c)}" onclick="cat='${esc(c)}';grid()">${esc(c)}</button>`).join("")}
       </div>
       <input id="srch" placeholder="Search dish or scan Barcode SKU… (F2)" value="${esc(q)}" oninput="q=this.value;grid()" onkeydown="if(event.key==='Enter')barcodeHit()">
       <div class="menu" id="grid"></div>
@@ -725,10 +872,31 @@ let vegOnly=false;
 function grid(){
   const el=$("#grid");if(!el)return;
   renderTabsOnly();
-  el.innerHTML=S.menu
-    .filter(m=>(!vegOnly||m.diet==="veg")&&(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
-    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${DIET_ICON[m.diet||"veg"]||""} ${esc(m.n)}<small>₹${m.p} · ${esc(m.c)}${m.oos?" · 86'd":""}</small></button>`)
-    .join("")||`<p class="mu">No dishes match.</p>`;
+  document.querySelectorAll("#catBar .cat-btn").forEach(b=>b.classList.toggle("on",b.getAttribute("data-cat")===cat));
+  if(!S.menu.length){
+    el.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:24px 12px;border:1px dashed var(--ln);border-radius:12px">
+      <b>Menu Abhi Empty Hai</b>
+      <p class="mu" style="margin:6px 0 12px">Apne restaurant ki dishes add ya scan karein taaki billing shuru ho sake.</p>
+      <div class="tbs" style="justify-content:center">
+        <button class="pri sm" onclick="openOcrMdl()">📷 Scan Menu (Photo / PDF)</button>
+        <button class="ok sm" onclick="openMenuForm()">+ Add Dish</button>
+        <button class="sm" onclick="tab='ops';render()">⚡ Bulk Import / Ops</button>
+      </div>
+    </div>`;
+    return;
+  }
+  const list=S.menu.filter(m=>(!vegOnly||m.diet==="veg")&&(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()));
+  if(!list.length){el.innerHTML=`<p class="mu">No dishes match.</p>`;return;}
+  const btnHtml=m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${DIET_ICON[m.diet||"veg"]||""} ${esc(m.n)}<small>₹${m.p} · ${esc(m.c)}${m.oos?" · 86'd":""}</small></button>`;
+  if(cat==="All"&&!q.trim()){
+    const groups=[];const byCat={};
+    list.forEach(m=>{const k=m.c||"Mains";if(!byCat[k]){byCat[k]=[];groups.push(k);}byCat[k].push(m);});
+    if(groups.length>1){
+      el.innerHTML=groups.map(k=>`<div style="grid-column:1/-1;font-size:12px;font-weight:700;color:var(--ac);padding:8px 2px 3px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between"><span>${esc(k)}</span><span class="mu" style="font-weight:500">${byCat[k].length}</span></div>`+byCat[k].map(btnHtml).join("")).join("");
+      return;
+    }
+  }
+  el.innerHTML=list.map(btnHtml).join("");
 }
 function cart(){
   const el=$("#cart");if(!el)return;
@@ -1042,6 +1210,8 @@ function recallKot(idx){
 
 // ---------- MENU EDITOR + OCR / PDF / QR + TABLE QR STANDEES ----------
 function vMenu(){
+  const catCnts={};S.menu.forEach(m=>{const k=m.c||"Mains";catCnts[k]=(catCnts[k]||0)+1;});
+  const catSummary=Object.entries(catCnts).map(([k,v])=>`<span class="tag">${esc(k)}: ${v}</span>`).join(" ");
   return `
   <div class="card">
     <div class="row" style="border:0;padding:0">
@@ -1049,14 +1219,16 @@ function vMenu(){
       <div class="tbs" style="margin:0">
         <button class="pri sm" onclick="openMenuForm()">+ Add Dish</button>
         <button class="ok sm" onclick="openOcrMdl()">📷 Scan Menu (Photo / PDF / QR)</button>
+        ${trueRole==="superadmin"?`<button class="sm" onclick="loadMasterMenu()">✨ Load Master Menu</button>`:""}
         <button class="sm" onclick="openTableQrStandee()">📱 Table QR Menu</button>
         <button class="sm" onclick="dlCsv('menu')">Export CSV</button>
       </div>
     </div>
+    ${catSummary?`<div class="tbs" style="margin:8px 0 4px">${catSummary}</div>`:""}
     <div class="tw" style="margin-top:8px">
       <table>
         <tr><th>Dish</th><th>Cat / Station</th><th>Price</th><th>GST%</th><th>Prep / SKU</th><th>Status</th><th>Actions</th></tr>
-        ${S.menu.map(m=>`<tr>
+        ${S.menu.length?S.menu.map(m=>`<tr>
           <td><b>${esc(m.n)}</b>${m.v&&m.v.length?`<br><small class="mu">${m.v.map(x=>x.n+" ₹"+x.p).join(", ")}</small>`:""}</td>
           <td>${esc(m.c)}<br><small class="mu">${esc(m.st||"Main Kitchen")}</small></td>
           <td>₹${m.p}</td>
@@ -1064,7 +1236,7 @@ function vMenu(){
           <td>${m.prep||12}m ${m.sku?`· ${esc(m.sku)}`:""}</td>
           <td><button class="sm ${m.oos?"wr":"ok"}" onclick="toggleOos(${m.id})">${m.oos?"86'd (Out)":"Available"}</button></td>
           <td><button class="sm" onclick="openMenuForm(${m.id})">Edit</button> <button class="sm wr" onclick="delDish(${m.id})">Del</button></td>
-        </tr>`).join("")}
+        </tr>`).join(""):`<tr><td colspan="7" class="mu" style="text-align:center;padding:18px">Menu empty hai. <b>+ Add Dish</b> ya <b>📷 Scan Menu</b> se apne restaurant ki dishes upload karein.</td></tr>`}
       </table>
     </div>
   </div>`;
@@ -1645,6 +1817,13 @@ async function onboardRest(){
   const city=$("#saCity").value.trim(),plan=$("#saPlan").value;
   const r=await sb.from("restaurants").upsert({id,name,city,plan,owner_email:$("#saEm").value.trim(),active:true});
   if(r.error)return toast(r.error.message);
+  if(id!=="main"){
+    const ex=await sb.from("app_state").select("id").eq("id",id).maybeSingle();
+    if(!ex.error&&!ex.data){
+      const init=seed(id);init.cfg.rName=name;
+      await sb.from("app_state").insert({id,data:init});
+    }
+  }
   if($("#saEm").value.trim())await createCrewLogin(id,name,city,plan);
   await loadSaasLists();render();toast("Restaurant "+name+" ready!");
 }

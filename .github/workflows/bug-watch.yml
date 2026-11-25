@@ -1,0 +1,37 @@
+name: DineLoop 24x7 Automated Bug Watch
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live DineLoop pages and alert on failure
+        env:
+          SITE_URL: https://dineloop.raghav1128h.workers.dev
+          BUG_ALERT_URL: https://edgklbjmkewdokvptksx.supabase.co/functions/v1/bug-alert
+          BUG_WATCH_SECRET: ${{ secrets.BUG_WATCH_SECRET }}
+        run: |
+          FAILS=""
+          for path in "/" "/waiter.html" "/order.html" "/display.html" "/landing.js" "/crm.js" "/erp.js" "/platform.js" "/sw.js"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${SITE_URL}${path}")
+            echo "${path} -> HTTP ${code}"
+            if [ "$code" != "200" ]; then
+              FAILS="${FAILS}${path} returned HTTP ${code}\n"
+            fi
+          done
+          if [ -n "$FAILS" ]; then
+            echo "Detected issues:"
+            printf "$FAILS"
+            if [ -n "$BUG_WATCH_SECRET" ]; then
+              curl -s -X POST "$BUG_ALERT_URL" \
+                -H "Content-Type: application/json" \
+                -H "x-watch-secret: $BUG_WATCH_SECRET" \
+                -d "$(jq -n --arg d "$FAILS" '{source:"cron",severity:"critical",title:"DineLoop Live Asset Down",details:$d,page_url:"https://dineloop.raghav1128h.workers.dev",send_email:true}')"
+            fi
+            exit 1
+          fi
+          echo "All DineLoop assets healthy (HTTP 200)."

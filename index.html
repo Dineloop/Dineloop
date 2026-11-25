@@ -271,6 +271,9 @@ async function boot(){
     if(restInfo&&restInfo.active===false&&trueRole!=="superadmin"){
       return blockedScreen("Subscription paused for "+restInfo.name+". Please contact DineLoop Support.");
     }
+    if(restInfo&&restInfo.plan==="trial"&&restInfo.trial_ends_at&&new Date(restInfo.trial_ends_at)<new Date()&&trueRole!=="superadmin"){
+      return blockedScreen("14-day Free Trial ended for "+restInfo.name+". Contact DineLoop to upgrade to Pro.");
+    }
     await loadOutletState(activeOutlet);
     if(myRole==="waiter")return waiterRedirectScreen();
     else if(myRole==="kitchen")tab="kds";
@@ -1606,11 +1609,12 @@ function vSaas(){
       ${restList.map(r=>`<tr>
         <td><b>${esc(r.id)}</b></td>
         <td>${esc(r.name)}${r.city?`<br><small class="mu">${esc(r.city)}</small>`:""}</td>
-        <td><span class="tag">${esc(r.plan)}</span></td>
+        <td><span class="tag">${esc(r.plan)}</span>${r.plan==="trial"&&r.trial_ends_at?`<br><small class="mu">Ends ${new Date(r.trial_ends_at).toLocaleDateString("en-IN")}</small>`:""}</td>
         <td><span class="tag ${r.active?"okt":"low"}">${r.active?"Active":"Paused"}</span></td>
         <td>
           <button class="sm ${activeOutlet===r.id?"on":""}" onclick="switchOutlet('${esc(r.id)}')">Open</button>
           <button class="sm" onclick="pushMenuToOutlet('${esc(r.id)}')" title="Push current menu to this outlet">Push Menu</button>
+          ${r.plan==="trial"?`<button class="sm ok" onclick="upgradeRestPro('${esc(r.id)}')">Make Pro</button>`:""}
           <button class="sm ${r.active?"wr":"ok"}" onclick="toggleRest('${esc(r.id)}',${!r.active})">${r.active?"Pause":"Enable"}</button>
         </td>
       </tr>`).join("")}
@@ -1654,6 +1658,11 @@ async function markLead(id,st){
   const r=await sb.from("demo_leads").update({status:st}).eq("id",id);
   if(r.error)return toast(r.error.message);
   await loadSaasLists();render();toast("Updated lead");
+}
+async function upgradeRestPro(id){
+  const r=await sb.from("restaurants").update({plan:"pro",active:true}).eq("id",id);
+  if(r.error)return toast(r.error.message);
+  await loadSaasLists();render();toast(id+" upgraded to Pro!");
 }
 
 // ---------- KEYBOARD SHORTCUTS ----------

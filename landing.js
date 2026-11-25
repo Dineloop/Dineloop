@@ -49,8 +49,9 @@ window.renderLanding = function(){
     <div class="tbs" style="margin:0">
       <button class="sm" onclick="toggleLang()">${hi?"हिं":"EN"}</button>
       <button class="sm" onclick="cycleTheme()">🎨</button>
-      <button class="sm" onclick="openLoginModal()">${hi?"स्टाफ लॉगिन":"Login"}</button>
-      <button class="sm pri" onclick="openDemoModal()">${hi?"फ्री डेमो बुक करें":"Book a Free Demo"}</button>
+      <button class="sm" onclick="openLoginModal()">${hi?"लॉगिन":"Login"}</button>
+      <button class="sm ok" onclick="openDemoModal()">${hi?"डेमो":"Free Demo"}</button>
+      <button class="sm pri" onclick="openSignupModal()">${hi?"फ्री साइन-अप":"Start Free Trial"}</button>
     </div>
   </div>
 
@@ -64,8 +65,9 @@ window.renderLanding = function(){
           :"DineLoop combines Petpooja-grade billing, Kitchen Display, separate Waiter PWA, exact-amount UPI QR, Menu Photo/PDF OCR, and Reelo-style WhatsApp loyalty in one lightweight platform."}
       </p>
       <div class="tbs" style="margin-top:18px">
-        <button class="pri" style="padding:12px 20px;font-size:16px" onclick="openDemoModal()">${hi?"फ्री डेमो बुक करें →":"Book a Free Demo →"}</button>
-        <button style="padding:12px 18px" onclick="openLoginModal()">${hi?"POS में लॉगिन करें":"Staff Login"}</button>
+        <button class="pri" style="padding:12px 20px;font-size:16px" onclick="openSignupModal()">${hi?"14 दिन फ्री ट्रायल शुरू करें →":"Start 14-Day Free Trial →"}</button>
+        <button style="padding:12px 18px" onclick="openDemoModal()">${hi?"फ्री डेमो बुक करें":"Book a Free Demo"}</button>
+        <button style="padding:12px 18px" onclick="openLoginModal()">${hi?"स्टाफ लॉगिन":"Staff Login"}</button>
         <a href="/order.html?outlet=main" target="_blank" style="text-decoration:none"><button class="ok" style="padding:12px 16px">${hi?"QR मेनू देखें":"Preview QR Menu"}</button></a>
       </div>
     </div>
@@ -176,8 +178,51 @@ window.openLoginModal = function(){
     <div class="tbs" style="margin-top:12px">
       <button class="pri" style="flex:1" onclick="doLogin()">Open POS</button>
       <button onclick="closeMdl()">Cancel</button>
-    </div>`);
+    </div>
+    <p class="mu" style="margin-top:10px;text-align:center">New restaurant? <a href="javascript:void(0)" onclick="openSignupModal()">Start 14-day Free Trial →</a></p>`);
   setTimeout(()=>$("#em")?.focus(),50);
+};
+
+window.openSignupModal = function(){
+  showMdl(`<b>🚀 Create Your Restaurant Account (14-Day Free Trial)</b>
+    <p class="mu">Instant setup — start billing, kitchen display & UPI QR in 30 seconds.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <input id="suRest" placeholder="Restaurant / Café Name * (e.g. Spice Villa)">
+      <div class="g2">
+        <input id="suCity" placeholder="City (e.g. Jaipur)">
+        <input id="suPh" placeholder="10-digit Mobile *" inputmode="numeric" maxlength="10">
+      </div>
+      <input id="suName" placeholder="Owner Name *">
+      <input id="suEm" placeholder="Email Address *">
+      <input id="suPw" type="password" placeholder="Create Password (min 6 chars) *" onkeydown="if(event.key==='Enter')doSelfSignup()">
+    </div>
+    <div class="tbs">
+      <button class="pri" id="suBtn" style="flex:1" onclick="doSelfSignup()">Launch My Restaurant POS</button>
+      <button onclick="closeMdl()">Cancel</button>
+    </div>
+    <p class="mu" style="margin-top:8px;text-align:center">Already have an account? <a href="javascript:void(0)" onclick="openLoginModal()">Login →</a></p>`);
+};
+
+window.doSelfSignup = async function(){
+  const restaurant_name = ($("#suRest").value||"").trim(), city = ($("#suCity").value||"").trim();
+  const phone = ($("#suPh").value||"").replace(/\D/g,""), owner_name = ($("#suName").value||"").trim();
+  const email = ($("#suEm").value||"").trim(), password = ($("#suPw").value||"");
+  if(!restaurant_name || !email || password.length<6) return toast("Restaurant name, email & 6+ char password required");
+  if(!sb) return toast("Requires Cloud connection");
+  const btn=$("#suBtn"); if(btn){btn.disabled=true;btn.textContent="Creating your POS…";}
+  const r = await sb.functions.invoke("self-signup",{body:{restaurant_name,city,phone,owner_name,email,password}});
+  if(r.error || !r.data || !r.data.ok){
+    if(btn){btn.disabled=false;btn.textContent="Launch My Restaurant POS";}
+    return toast((r.data&&r.data.error) || (r.error&&r.error.message) || "Signup failed");
+  }
+  toast("Welcome to DineLoop! Logging in…");
+  const li = await sb.auth.signInWithPassword({email,password});
+  if(li.error) return toast(li.error.message);
+  user = li.data.user; closeMdl();
+  const hdr=document.querySelector("header");if(hdr)hdr.style.display="flex";
+  if($("#st"))$("#st").style.display="inline-block";
+  if($("#clk"))$("#clk").style.display="inline-block";
+  boot();
 };
 
 window.openDemoModal = function(){

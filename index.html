@@ -51,12 +51,14 @@ body{
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#111319}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.055;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 header,main{position:relative;z-index:1}
-header{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;background:var(--sf2);border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:inset 0 1px 0 var(--rim),0 10px 28px rgba(0,0,0,.3)}
-h1{font:700 18px Cinzel,Outfit,sans-serif;margin:0;letter-spacing:.08em;background:var(--pri);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
-.pill{font:700 10px Outfit,sans-serif;padding:3px 10px;border-radius:99px;border:1px solid var(--ok);color:var(--ok);white-space:nowrap;box-shadow:inset 0 1px 0 var(--rim)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 14px;background:var(--sf2);border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:inset 0 1px 0 var(--rim),0 10px 28px rgba(0,0,0,.3)}
+h1{font:700 17px Cinzel,Outfit,sans-serif;margin:0;letter-spacing:.08em;background:var(--pri);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.pill{font:700 10px Outfit,sans-serif;padding:3px 8px;border-radius:99px;border:1px solid var(--ok);color:var(--ok);white-space:nowrap;box-shadow:inset 0 1px 0 var(--rim)}
 .pill.l{border-color:var(--ac2);color:var(--ac)}.pill.w{border-color:var(--wn);color:var(--wn)}
-#clk{font:600 12px Outfit,sans-serif;color:var(--mu);white-space:nowrap}
-nav{display:flex;gap:6px;overflow-x:auto;flex:1;padding:2px 0}
+#clk{font:600 11px Outfit,sans-serif;color:var(--mu);white-space:nowrap}
+nav{display:flex;flex-wrap:wrap;gap:5px;flex:1 1 auto;align-items:center}
+nav button{padding:6px 10px;font-size:13.5px}
+.hdr-r{display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap}
 button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--ln);background:var(--btn);color:var(--tx);border-radius:10px;padding:7px 12px;transition:.16s;white-space:nowrap;box-shadow:inset 0 1px 0 var(--rim),0 3px 10px rgba(0,0,0,.22)}
 button:hover{border-color:var(--ac);box-shadow:inset 0 1px 0 var(--rim),0 5px 16px rgba(226,183,92,.24);transform:translateY(-1px)}
 button:active{transform:scale(.97)}
@@ -106,13 +108,15 @@ a{color:var(--ac)}.mu{color:var(--mu);font-size:13px}#rcp{display:none}
 <body>
 <header>
   <h1 id="brand">🍽️ DINELOOP</h1>
-  <span class="pill" id="st"></span>
-  <span id="roleChip" class="pill w" style="cursor:pointer;display:none" onclick="openPinSwitch()"></span>
-  <span id="clk"></span>
   <nav id="nav"></nav>
-  <button class="sm pri" id="btnInstall" style="display:none" onclick="installApp()">📲 Install App</button>
-  <button class="sm" id="btnTheme" onclick="cycleTheme()" title="Switch Theme">🎨</button>
-  <button class="sm" id="btnOut" style="display:none" onclick="doLogout()">Logout</button>
+  <div class="hdr-r">
+    <span class="pill" id="st"></span>
+    <span id="roleChip" class="pill w" style="cursor:pointer;display:none" onclick="openPinSwitch()"></span>
+    <span id="clk"></span>
+    <button class="sm pri" id="btnInstall" style="display:none" onclick="installApp()">📲 Install</button>
+    <button class="sm" id="btnTheme" onclick="cycleTheme()" title="Switch Theme">🎨</button>
+    <button class="sm" id="btnOut" style="display:none" onclick="doLogout()">Logout</button>
+  </div>
 </header>
 <main id="v"></main>
 <div id="mdlHost"></div>
@@ -289,7 +293,8 @@ async function doLogout(){
 }
 
 function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display="none",2600)}
-setInterval(()=>{$("#clk").textContent=new Date().toLocaleTimeString("en-IN")},1000);
+setInterval(()=>{$("#clk").textContent=new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})},5000);
+$("#clk").textContent=new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
 
 const THEMES=["","copper","titanium"];
 let curTheme="";try{curTheme=localStorage.getItem("dl_theme")||"";if(curTheme)document.documentElement.setAttribute("data-theme",curTheme);}catch(e){}
@@ -319,10 +324,12 @@ function render(){
   const tabs=allowedTabs();
   if(!tabs.some(x=>x[0]===tab))tab=tabs[0][0];
   $("#brand").textContent="🍽️ "+(S.cfg.rName||"DINELOOP").toUpperCase();
-  $("#st").textContent=sb?("CLOUD SYNC · "+activeOutlet):"LOCAL MODE";
+  $("#st").textContent=sb?("● "+activeOutlet):"LOCAL";
+  $("#st").title=sb?("Cloud Sync · "+activeOutlet):"Local Mode";
   $("#st").className="pill"+(sb?"":" l");
   $("#roleChip").style.display="inline-block";
-  $("#roleChip").textContent=`${activeName} (${myRole.toUpperCase()}) ▾`;
+  $("#roleChip").textContent=`${myRole.toUpperCase()} ▾`;
+  $("#roleChip").title=`${activeName} (${myRole})`;
   $("#btnOut").style.display=sb&&user?"inline-block":"none";
   $("#nav").innerHTML=tabs.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
   const views={bill:vBill,kds:vKds,menu:vMenu,stock:vStock,cust:vCust,rep:vRep,cfg:vCfg,saas:vSaas};

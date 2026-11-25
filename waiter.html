@@ -314,16 +314,21 @@ function render(){
     }
   }
 
-  $("#v").innerHTML=`
+  const readyKots=(S.kots||[]).filter(k=>k.st===2);
+  const readyBanner=readyKots.length?`<div class="box-ok" style="margin-bottom:10px"><b>🔔 FOOD READY TO SERVE:</b> ${readyKots.map(k=>`<span class="tag okt" style="margin-left:4px">${esc(k.table)} (KOT #${k.id})</span>`).join("")}</div>`:"";
+
+  $("#v").innerHTML=readyBanner+`
   <div class="card">
     <div class="row" style="border:0;padding:0"><b>1. Select Table</b>
       <div class="tbs" style="margin:0">${["Dine-In","Parcel"].map(md=>`<button class="sm ${mt.mode===md?"on":""}" onclick="meta('${esc(tb)}').mode='${md}';save();render()">${md}</button>`).join("")}</div>
     </div>
     <div class="tgrid">${TB.map(t=>{
       const tc=calc(t),cnt=tc.o.reduce((a,l)=>a+l.q,0);
+      const mins=tc.mt.updatedAt?Math.max(0,Math.round((Date.now()-tc.mt.updatedAt)/6e4)):0;
       let subTxt="Free";
       if(cnt)subTxt=tc.mt.prepaid?(tc.due>0?`Due ₹${tc.due}`:`✓ Paid`):`Unpaid ₹${tc.due}`;
       else if(tc.mt.occ)subTxt=`🪑 ${tc.mt.pax||1} Seated`;
+      if((cnt||tc.mt.occ)&&mins)subTxt+=` · ${mins}m`;
       const clr=cnt?(tc.mt.prepaid&&tc.due===0?"var(--ok)":"var(--wr)"):(tc.mt.occ?"var(--wn)":"var(--mu)");
       return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${t}';render()"><b>${t}</b><small style="color:${t===tb?"inherit":clr}">${subTxt}</small></button>`;
     }).join("")}</div>
@@ -335,7 +340,7 @@ function render(){
   </div>
   <div class="g2">
     <div class="card"><b>2. Tap Dish for ${esc(tb)}</b>
-      <div class="tbs" style="margin-top:8px">${cats.map(cx=>`<button class="sm ${cat===cx?"on":""}" onclick="cat='${esc(cx)}';render()">${esc(cx)}</button>`).join("")}</div>
+      <div class="tbs" style="margin-top:8px"><button class="sm ${wVegOnly?"ok":""}" onclick="wVegOnly=!wVegOnly;render()">🟢 Veg</button>${cats.map(cx=>`<button class="sm ${cat===cx?"on":""}" onclick="cat='${esc(cx)}';render()">${esc(cx)}</button>`).join("")}</div>
       <input placeholder="Search dish…" value="${esc(q)}" oninput="q=this.value;gridOnly()">
       <div class="menu" id="wGrid"></div>
     </div>
@@ -353,6 +358,7 @@ function render(){
         <button class="pri" onclick="sendKot()">Send KOT${unsent?" ("+unsent+")":""}</button>
         ${c.due>0?`<button class="ok" onclick="showQr()">Show UPI QR (₹${c.due})</button>`:""}
         ${c.due>0&&S.cfg.waiterCanPay?`<button onclick="pay('Cash')">Cash Paid</button>`:""}
+        <button class="sm" onclick="showFeedbackQr()">★ Review QR</button>
         ${c.o.length&&c.due===0?`<button class="ok" onclick="clearTable()">✓ Served & Clear Table</button>`:""}
       </div>
     </div>
@@ -366,10 +372,16 @@ function render(){
   </div>`:""}`;
   gridOnly();
 }
+const DIET_ICON={veg:"🟢",nonveg:"🔴",egg:"🟡"};
+let wVegOnly=false;
+function showFeedbackQr(){
+  const u=`${location.origin}/order.html?outlet=${encodeURIComponent(activeOutlet)}&fb=${encodeURIComponent(tb)}`;
+  $("#mdlHost").innerHTML=`<div class="mdl-bg" onclick="if(event.target===this)closeMdl()"><div class="mdl" style="text-align:center"><b>★ Guest Feedback QR</b><p class="mu">Guest scans to rate & leave a Google Review!</p><div class="qr-box">${makeQrSvg(u,200)}</div><button onclick="closeMdl()">Close</button></div></div>`;
+}
 function gridOnly(){
   const el=$("#wGrid");if(!el)return;
-  el.innerHTML=S.menu.filter(m=>(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
-    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${esc(m.n)}<small>₹${m.p}${m.oos?" · 86'd":""}</small></button>`).join("")||`<p class="mu">No dishes</p>`;
+  el.innerHTML=S.menu.filter(m=>(!wVegOnly||m.diet==="veg")&&(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
+    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${DIET_ICON[m.diet||"veg"]||""} ${esc(m.n)}<small>₹${m.p}${m.oos?" · 86'd":""}</small></button>`).join("")||`<p class="mu">No dishes</p>`;
 }
 let _instPrompt=null;
 if(!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)&&$("#btnInstall"))$("#btnInstall").style.display="inline-block";

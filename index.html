@@ -146,8 +146,8 @@ function defaultCfg(){
 function seed(){
   return{
     menu:[
-      {id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Main Kitchen",prep:12,sku:"",hh:true,bom:[]},
-      {id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Beverage",prep:5,sku:"",hh:true,bom:[]}
+      {id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Main Kitchen",prep:12,sku:"",hh:true,bom:[],diet:"veg"},
+      {id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0,g:null,v:[],a:[],oos:false,st:"Beverage",prep:5,sku:"",hh:true,bom:[],diet:"veg"}
     ],
     stock:[],cust:{},bills:[],kots:[],kotsDone:[],holds:[],open:{},openMeta:{},kn:0,tokenNo:0,tokenDay:"",
     giftCards:[],campaigns:[],feedbacks:[],reservations:[],waitlist:[],suppliers:[],pos:[],wastage:[],expenses:[],shifts:[],riders:[],audit:[],
@@ -156,7 +156,7 @@ function seed(){
 }
 function normState(x){
   const d=seed(),s=(x&&typeof x==="object")?x:{};
-  s.menu=Array.isArray(s.menu)?s.menu.map((m,i)=>({id:m.id??i,n:m.n||"Dish",p:+m.p||0,c:m.c||"Mains",s:m.s||"",u:+m.u||0,g:m.g===0||m.g>0?+m.g:null,v:Array.isArray(m.v)?m.v:[],a:Array.isArray(m.a)?m.a:[],oos:!!m.oos,st:m.st||"Main Kitchen",prep:+m.prep||12,sku:m.sku||"",hh:m.hh!==false,bom:Array.isArray(m.bom)?m.bom:[],combo:Array.isArray(m.combo)?m.combo:[]})):d.menu;
+  s.menu=Array.isArray(s.menu)?s.menu.map((m,i)=>({id:m.id??i,n:m.n||"Dish",p:+m.p||0,c:m.c||"Mains",s:m.s||"",u:+m.u||0,g:m.g===0||m.g>0?+m.g:null,v:Array.isArray(m.v)?m.v:[],a:Array.isArray(m.a)?m.a:[],oos:!!m.oos,st:m.st||"Main Kitchen",prep:+m.prep||12,sku:m.sku||"",hh:m.hh!==false,bom:Array.isArray(m.bom)?m.bom:[],combo:Array.isArray(m.combo)?m.combo:[],diet:m.diet||"veg"})):d.menu;
   ["stock","bills","kots","kotsDone","holds","giftCards","campaigns","feedbacks","reservations","waitlist","suppliers","pos","wastage","expenses","shifts","riders","audit"].forEach(k=>{if(!Array.isArray(s[k]))s[k]=[];});
   s.cust=(s.cust&&typeof s.cust==="object")?s.cust:{};
   s.open=(s.open&&typeof s.open==="object")?s.open:{};
@@ -577,7 +577,10 @@ function vBill(){
           <button class="sm" onclick="openFloorMapMdl()">🗺 Floor (${busyCnt}/${TB.length})</button>
         </div>
       </div>
-      <div class="tbs" style="margin-top:8px">${cats.map(c=>`<button class="sm ${cat===c?"on":""}" onclick="cat='${esc(c)}';grid()">${esc(c)}</button>`).join("")}</div>
+      <div class="tbs" style="margin-top:8px">
+        <button class="sm ${vegOnly?"ok":""}" onclick="vegOnly=!vegOnly;render()">🟢 Veg Only</button>
+        ${cats.map(c=>`<button class="sm ${cat===c?"on":""}" onclick="cat='${esc(c)}';grid()">${esc(c)}</button>`).join("")}
+      </div>
       <input id="srch" placeholder="Search dish or scan Barcode SKU… (F2)" value="${esc(q)}" oninput="q=this.value;grid()" onkeydown="if(event.key==='Enter')barcodeHit()">
       <div class="menu" id="grid"></div>
     </div>
@@ -628,12 +631,13 @@ function addOpenItem(){
 }
 function openFloorMapMdl(){
   showMdl(`<b>🗺 Live Table Floor Map</b>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:12px 0">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin:12px 0">
       ${TB.map(t=>{
         const c=calc(t),cnt=c.o.reduce((a,l)=>a+l.q,0);
+        const mins=c.mt.updatedAt?Math.max(0,Math.round((Date.now()-c.mt.updatedAt)/6e4)):0;
         const clr=c.mt.prepaid?(c.due>0?"var(--wn)":"var(--ok)"):(cnt?"var(--wr)":(c.mt.occ?"var(--ac)":"var(--ln)"));
         const st=c.mt.prepaid?(c.due>0?`Due ₹${c.due}`:`✓${c.mt.prepaidCode}`):(cnt?`₹${c.tot}`:(c.mt.occ?`🪑 ${c.mt.pax}G`:"Free"));
-        return `<button style="border-color:${clr};text-align:center;padding:10px 6px" onclick="tb='${esc(t)}';closeMdl();render()"><b>${esc(t)}</b><br><small>${st}</small></button>`;
+        return `<button style="border-color:${clr};text-align:center;padding:10px 6px" onclick="tb='${esc(t)}';closeMdl();render()"><b>${esc(t)}</b><br><small>${st}${c.mt.occ&&mins?` · ⏱${mins}m`:""}</small></button>`;
       }).join("")}
     </div>
     <button onclick="closeMdl()">Close</button>`);
@@ -713,12 +717,14 @@ async function rejectPubOrder(id){
   if(sb)await sb.from("public_orders").update({status:"cancelled"}).eq("id",id);
   await loadPubOrders();openInboxMdl();
 }
+const DIET_ICON={veg:"🟢",nonveg:"🔴",egg:"🟡"};
+let vegOnly=false;
 function grid(){
   const el=$("#grid");if(!el)return;
   renderTabsOnly();
   el.innerHTML=S.menu
-    .filter(m=>(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
-    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${esc(m.n)}<small>₹${m.p} · ${esc(m.c)}${m.oos?" · 86'd":""}</small></button>`)
+    .filter(m=>(!vegOnly||m.diet==="veg")&&(cat==="All"||m.c===cat)&&m.n.toLowerCase().includes(q.toLowerCase()))
+    .map(m=>`<button class="${m.oos?"oos":""}" onclick="add(${m.id})">${DIET_ICON[m.diet||"veg"]||""} ${esc(m.n)}<small>₹${m.p} · ${esc(m.c)}${m.oos?" · 86'd":""}</small></button>`)
     .join("")||`<p class="mu">No dishes match.</p>`;
 }
 function cart(){
@@ -1080,7 +1086,10 @@ function openMenuForm(id=null){
   const aStr=(m.a||[]).map(x=>`${x.n}:${x.p}`).join(", ");
   showMdl(`<b>${id!==null?"Edit Dish":"Add New Dish"}</b>
     <div style="margin:10px 0;display:grid;gap:8px">
-      <input id="mn" placeholder="Dish Name" value="${esc(m.n)}">
+      <div class="g2">
+        <input id="mn" placeholder="Dish Name" value="${esc(m.n)}">
+        <select id="mdiet"><option value="veg" ${m.diet==="veg"||!m.diet?"selected":""}>🟢 Veg</option><option value="nonveg" ${m.diet==="nonveg"?"selected":""}>🔴 Non-Veg</option><option value="egg" ${m.diet==="egg"?"selected":""}>🟡 Egg</option></select>
+      </div>
       <div class="g2">
         <input id="mp" type="number" min="0" placeholder="Base Price ₹" value="${m.p}">
         <input id="mc" placeholder="Category (Mains, Starters, Drinks)" value="${esc(m.c)}">
@@ -1114,7 +1123,7 @@ function saveDish(id){
   const prev=id!==null?M(id):null;
   const obj={
     id:id!==null?id:S.menu.reduce((mx,x)=>Math.max(mx,x.id),0)+1,
-    n,p,c,st:$("#mst").value,prep:+$("#mprep").value||12,sku:$("#msku").value.trim(),hh:$("#mhh").checked,
+    n,p,c,diet:$("#mdiet").value||"veg",st:$("#mst").value,prep:+$("#mprep").value||12,sku:$("#msku").value.trim(),hh:$("#mhh").checked,
     s:$("#ms").value.trim(),u:+$("#mu").value||0,bom:(prev&&prev.bom)||[],
     g:gRaw===""?null:+gRaw,v:parsePairs($("#mv").value),a:parsePairs($("#ma").value),oos:prev?!!prev.oos:false
   };

@@ -42,7 +42,7 @@ a{color:var(--ac)}.mu{color:var(--mu)}#rcp{display:none}
 <header><h1>◢ DINELOOP</h1><span class="pill" id="st"></span><span id="clk"></span><nav id="nav"></nav><button onclick="rst()">Reset</button></header>
 <main id="v"></main><div id="toast"></div><div id="rcp"></div>
 <script>
-const CFG={url:"",key:"",outlet:"main"}; // fill url + key after Supabase setup (see SETUP.md)
+const CFG={url:"https://edgklbjmkewdokvptksx.supabase.co",key:"sb_publishable_3Vjm7jhwAKDP9d5BFhaUvA_qOBXKqWc",outlet:"main"}; // fill url + key after Supabase setup (see SETUP.md)
 const $=s=>document.querySelector(s),R=n=>Math.round(n*100)/100,TB=["T1","T2","T3","T4","T5","T6","T7","Takeaway"];
 function seed(){return{menu:[{id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0},{id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0}],stock:[],cust:{},bills:[],kots:[],open:{},kn:0}}
 let S;try{S=JSON.parse(localStorage.getItem("dl2")||"null")}catch(e){}S=S||seed();

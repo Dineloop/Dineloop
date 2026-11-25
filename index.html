@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DineLoop Command Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#05060f;--sf:rgba(14,20,45,.68);--tx:#e6f1ff;--mu:#7d8bb0;--ac:#22d3ee;--ac2:#a855f7;--ln:rgba(34,211,238,.28);--wr:#ff4d6d;--ok:#4ade80;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;color:var(--tx);font:500 15px/1.4 Rajdhani,system-ui,sans-serif;background:var(--bg) radial-gradient(ellipse at 15% 0,rgba(168,85,247,.28),transparent 50%) fixed,radial-gradient(ellipse at 95% 100%,rgba(34,211,238,.2),transparent 55%) fixed}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#0a0e22}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7;background-size:340px 340px;background-image:radial-gradient(1px 1px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 78% 14%,#9be7ff,transparent),radial-gradient(1.5px 1.5px at 46% 68%,#fff,transparent),radial-gradient(1px 1px at 88% 82%,#fff,transparent),radial-gradient(1px 1px at 30% 90%,#d8b4fe,transparent);animation:tw 6s linear infinite alternate}
+@keyframes tw{to{opacity:.3;background-position:40px 20px}}
+header,main{position:relative;z-index:1}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 14px;background:rgba(8,12,30,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln);position:sticky;top:env(safe-area-inset-top,0px);z-index:20;box-shadow:0 0 24px rgba(34,211,238,.15)}
+h1{font:800 16px Orbitron,sans-serif;margin:0;letter-spacing:.12em;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{font:600 11px Orbitron,sans-serif;padding:3px 9px;border-radius:99px;border:1px solid var(--ok);color:var(--ok)}.pill.l{border-color:var(--ac2);color:var(--ac2)}
+#clk{font:600 12px Orbitron,sans-serif;color:var(--mu)}nav{display:flex;gap:4px;overflow-x:auto;flex:1}
+button{font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--ln);background:rgba(34,211,238,.06);color:var(--tx);border-radius:10px;padding:7px 12px;transition:.15s}
+button:hover{box-shadow:0 0 14px rgba(34,211,238,.45);border-color:var(--ac)}button:active{transform:scale(.96)}
+button.on,button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent;color:#04101c;box-shadow:0 0 16px rgba(34,211,238,.5)}
+main{padding:12px;max-width:1150px;margin:auto}
+.g2{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:760px){.g2,.cols{grid-template-columns:1fr}}
+.card{position:relative;background:var(--sf);backdrop-filter:blur(10px);border:1px solid var(--ln);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 0 28px rgba(168,85,247,.1),inset 0 0 22px rgba(34,211,238,.05)}
+.card::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--ac),var(--ac2),transparent)}
+.card>b:first-child{font:600 12px Orbitron,sans-serif;letter-spacing:.1em;color:var(--ac);text-transform:uppercase}
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:8px;margin-top:8px}
+.menu button{text-align:left;padding:11px}.menu small{display:block;color:var(--mu)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(125,139,176,.18)}
+.tbs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+input,select,textarea{font:inherit;color:var(--tx);background:rgba(5,8,22,.7);border:1px solid var(--ln);border-radius:10px;padding:8px;width:100%;outline:none}input:focus,textarea:focus,select:focus{border-color:var(--ac);box-shadow:0 0 10px rgba(34,211,238,.4)}
+.k{border-left:4px solid var(--ac);background:rgba(5,8,22,.6);padding:9px;margin:7px 0;border-radius:8px;cursor:pointer}.c1 .k{border-color:var(--ac2)}.c2 .k{border-color:var(--ok)}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--ln)}.low{color:var(--wr);border-color:var(--wr)}
+.bar{display:flex;align-items:flex-end;gap:4px;height:100px}.bar i{flex:1;background:linear-gradient(0deg,var(--ac2),var(--ac));border-radius:4px 4px 0 0;min-height:2px;box-shadow:0 0 8px rgba(34,211,238,.5)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats b{display:block;font:800 22px Orbitron,sans-serif;color:var(--tx)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}td,th{padding:7px;text-align:left;border-bottom:1px solid rgba(125,139,176,.18)}th{color:var(--mu);font-weight:600}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:linear-gradient(135deg,var(--ac),var(--ac2));color:#04101c;font-weight:700;padding:9px 16px;border-radius:99px;display:none;z-index:40}
+a{color:var(--ac)}.mu{color:var(--mu)}#rcp{display:none}
+@page{margin:2mm}@media print{body>*:not(#rcp){display:none!important}body::before,body::after{display:none}#rcp{display:block;white-space:pre;font:12px/1.3 monospace;color:#000;background:#fff;width:72mm}}
+</style></head><body>
+<header><h1>◢ DINELOOP</h1><span class="pill" id="st"></span><span id="clk"></span><nav id="nav"></nav><button onclick="rst()">Reset</button></header>
+<main id="v"></main><div id="toast"></div><div id="rcp"></div>
+<script>
+const CFG={url:"",key:"",outlet:"main"}; // fill url + key after Supabase setup (see SETUP.md)
+const $=s=>document.querySelector(s),R=n=>Math.round(n*100)/100,TB=["T1","T2","T3","T4","T5","T6","T7","Takeaway"];
+function seed(){return{menu:[{id:0,n:"Masala Dosa",p:120,c:"Mains",s:"",u:0},{id:1,n:"Masala Chai",p:40,c:"Drinks",s:"",u:0}],stock:[],cust:{},bills:[],kots:[],open:{},kn:0}}
+let S;try{S=JSON.parse(localStorage.getItem("dl2")||"null")}catch(e){}S=S||seed();
+let sb=null,user=null,tmr,tab="bill",tb="T1",q="",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed",msg="Hi {name}, we miss you at DineLoop! Show this message for a free dessert on your next visit.";
+function save(){try{localStorage.setItem("dl2",JSON.stringify(S))}catch(e){}if(sb&&user){clearTimeout(tmr);tmr=setTimeout(()=>{S._r=Math.random();sb.from("app_state").upsert({id:CFG.outlet,data:S}).then(r=>r.error&&toast("Sync failed"))},400)}}
+async function boot(){if(!sb&&CFG.url&&window.supabase)sb=supabase.createClient(CFG.url,CFG.key);
+if(sb&&!user){const g=await sb.auth.getSession();user=g.data.session&&g.data.session.user;if(!user)return login();
+const r=await sb.from("app_state").select("data").eq("id",CFG.outlet).maybeSingle();if(r.data&&r.data.data)S=r.data.data;else save();
+sb.channel("dl").on("postgres_changes",{event:"*",schema:"public",table:"app_state"},p=>{const n=p.new&&p.new.data;if(n&&n._r!==S._r&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){S=n;render()}}).subscribe()}
+render()}
+function login(){$("#v").innerHTML=`<div class="card" style="max-width:360px;margin:40px auto"><b>Crew login</b><input id="em" placeholder="Email" style="margin:10px 0"><input id="pw" type="password" placeholder="Password"><button class="pri" style="margin-top:10px" onclick="doLogin()">Enter the deck</button></div>`}
+async function doLogin(){const r=await sb.auth.signInWithPassword({email:$("#em").value,password:$("#pw").value});if(r.error)return toast(r.error.message);user=r.data.user;boot()}
+const M=id=>S.menu.find(x=>x.id==id),seg=c=>(Date.now()-c.last)/864e5>=LD?"Lanes":c.visits>=3?"Regular":"New";
+function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2400)}
+setInterval(()=>{$("#clk").textContent=new Date().toLocaleTimeString("en-IN")},1000);
+const TABS=[["bill","◉ Billing"],["kds","◈ Galley"],["stock","▣ Cargo"],["cust","✦ Loyalty"],["rep","◭ Reports"]];
+function go(k){tab=k;render()}
+function render(){$("#st").textContent=sb?"CLOUD SYNC":"LOCAL MODE";$("#st").className="pill"+(sb?"":" l");
+$("#nav").innerHTML=TABS.map(([k,l])=>`<button class="${tab==k?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
+$("#v").innerHTML=({bill:vBill,kds:vKds,stock:vStock,cust:vCust,rep:vRep})[tab]();if(tab=="bill"){grid();cart()}}
+function rst(){if(confirm("Reset all data?")){S=seed();save();render()}}
+function pt(t){$("#rcp").textContent=t;window.print()}
+const L=(a,b)=>a.padEnd(24)+b.padStart(8);
+function bt(b){return["DINELOOP","Bill #"+b.no+"  "+new Date(b.t).toLocaleString("en-IN"),"Table: "+b.table,"-".repeat(32),...b.items.map(i=>L(i.n.slice(0,17)+" x"+i.q,"₹"+i.p*i.q)),"-".repeat(32),L("Subtotal","₹"+b.sub),...(b.disc?[L("Loyalty","-₹"+b.disc)]:[]),L("TOTAL","₹"+b.tot),"Paid by "+b.pay,"","Thank you! Visit again"].join("\n")}
+function prn(){if(lastB)pt(bt(lastB))}
+async function sendWA(to,t){if(sb){const r=await sb.functions.invoke("send-wa",{body:{to:"91"+to,text:t.replace(/\s+/g," ")}});toast(r.error?"WhatsApp send failed":"Sent on WhatsApp")}else window.open("https://wa.me/91"+to+"?text="+encodeURIComponent(t),"_blank")}
+const wt=p=>msg.replace("{name}",S.cust[p].name);
+function vBill(){return `<div class="g2"><div class="card"><b>Menu</b><input placeholder="Search dish…" style="margin-top:8px" value="${q}" oninput="q=this.value;grid()"><div class="menu" id="grid"></div></div>
+<div class="card"><b>Order</b><div class="tbs" style="margin-top:8px">${TB.map(t=>`<button class="${t==tb?"on":""}" onclick="tb='${t}';render()">${t}${(S.open[t]||[]).length?" •":""}</button>`).join("")}</div><div id="cart"></div>
+<div style="margin-top:10px"><input placeholder="Guest mobile (10 digits) for loyalty" inputmode="numeric" maxlength="10" value="${ph}" oninput="ph=this.value.replace(/\\D/g,'');cart()">
+<input placeholder="Guest name" style="margin:6px 0" value="${nmv}" oninput="nmv=this.value"><label><input type="checkbox" style="width:auto" ${op?"checked":""} onchange="op=this.checked"> Guest agrees to WhatsApp messages</label><br><label><input type="checkbox" style="width:auto" ${ap?"checked":""} onchange="ap=this.checked"> Auto-print KOT</label></div></div></div>`}
+function grid(){$("#grid").innerHTML=S.menu.filter(m=>m.n.toLowerCase().includes(q.toLowerCase())).map(m=>`<button onclick="add(${m.id})">${m.n}<small>₹${m.p} · ${m.c}</small></button>`).join("")}
+function add(id){const o=S.open[tb]=S.open[tb]||[],l=o.find(x=>x.id==id);l?l.q++:o.push({id,q:1,sent:0});cart();save()}
+function chg(id,d){const o=S.open[tb],l=o.find(x=>x.id==id);l.q+=d;if(l.q<=0)o.splice(o.indexOf(l),1);cart();save()}
+function calc(){const o=S.open[tb]||[],sub=o.reduce((a,l)=>a+M(l.id).p*l.q,0),c=S.cust[ph],disc=rd&&c&&c.pts>=100?Math.min(50,sub):0,tax=R((sub-disc)*.05),raw=sub-disc+tax,tot=Math.round(raw);return{o,sub,disc,tax,ro:R(tot-raw),tot,c}}
+function cart(){const c=calc(),cu=c.c;if(!cu)rd=false;
+$("#cart").innerHTML=(c.o.length?c.o.map(l=>`<div class="row"><span>${M(l.id).n}</span><span><button onclick="chg(${l.id},-1)">−</button> ${l.q} <button onclick="chg(${l.id},1)">+</button></span><b>₹${M(l.id).p*l.q}</b></div>`).join(""):`<p class="mu">No items on ${tb}. Tap a dish to add.</p>`)
++(cu?`<p>${cu.name}: <b>${cu.pts}</b> pts · ${cu.visits} visits ${cu.pts>=100?`<label><input type="checkbox" style="width:auto" ${rd?"checked":""} onchange="rd=this.checked;cart()"> Redeem 100 pts = ₹50</label>`:""}</p>`:"")
++`<div class="row"><span>Subtotal</span><span>₹${R(c.sub)}</span></div>`+(c.disc?`<div class="row"><span>Loyalty discount</span><span>−₹${c.disc}</span></div>`:"")
++`<div class="row"><span>CGST 2.5% + SGST 2.5%</span><span>₹${c.tax}</span></div><div class="row"><span>Round off</span><span>${c.ro}</span></div><div class="row"><b>Total</b><b>₹${c.tot}</b></div>
+<div class="tbs" style="margin-top:8px"><button onclick="kot()">Send KOT</button><button class="pri" onclick="pay('Cash')">Cash</button><button class="pri" onclick="pay('UPI')">UPI</button><button class="pri" onclick="pay('Card')">Card</button></div>${link}`}
+function kot(q2){const o=S.open[tb]||[],it=o.filter(l=>l.q>l.sent).map(l=>({n:M(l.id).n,q:l.q-l.sent}));if(!it.length){if(!q2)toast("Nothing new to send");return}
+const k={id:++S.kn,table:tb,items:it,st:0,t:Date.now()};S.kots.push(k);o.forEach(l=>l.sent=l.q);if(!q2)toast("KOT sent to kitchen");save();cart();if(ap)pt(["KOT "+k.id+"  "+k.table,"-".repeat(32),...it.map(x=>x.q+" x "+x.n)].join("\n"))}
+function pay(m){const c=calc();if(!c.o.length)return toast("Add items first");kot(1);const P=ph,ok=P.length==10;let u,t="";
+if(ok){u=S.cust[P]=S.cust[P]||{name:"",pts:0,visits:0,last:0,spent:0,opt:0};u.name=nmv||u.name||"Guest";u.pts+=Math.floor(c.tot/10)-(c.disc?100:0);u.visits++;u.last=Date.now();u.spent+=c.tot;if(op)u.opt=1;
+t=`Thanks for dining with DineLoop! Bill ₹${c.tot} paid by ${m}. You earned ${Math.floor(c.tot/10)} points, balance ${u.pts}.`}
+c.o.forEach(l=>{const it=M(l.id),s=S.stock.find(x=>x.n==it.s);if(s)s.q=R(Math.max(0,s.q-it.u*l.q))});
+lastB={no:S.bills.length+1,t:Date.now(),table:tb,items:c.o.map(l=>({n:M(l.id).n,q:l.q,p:M(l.id).p})),sub:c.sub,disc:c.disc,tot:c.tot,pay:m,ph:ok?P:""};S.bills.push(lastB);
+S.open[tb]=[];rd=false;link=`<div class="tbs"><button onclick="prn()">Print bill</button></div>`;ph="";nmv="";op=false;save();toast("Paid ₹"+c.tot);render();if(ok&&u.opt)sendWA(P,t)}
+function vKds(){const N=["New","Cooking","Ready"];return `<div class="cols">${N.map((n,i)=>`<div class="card c${i}"><b>${n}</b>${S.kots.filter(k=>k.st==i).map(k=>`<div class="k" onclick="adv(${k.id})"><b>KOT ${k.id} · ${k.table}</b> <span class="mu">${Math.max(0,Math.round((Date.now()-k.t)/6e4))}m</span>${k.items.map(x=>`<div>${x.q}× ${x.n}</div>`).join("")}</div>`).join("")||`<p class="mu">All clear</p>`}</div>`).join("")}</div><p class="mu">Tap a ticket to move it forward. Tap on Ready to clear.</p>`}
+function adv(id){const k=S.kots.find(x=>x.id==id);k.st++;if(k.st>2)S.kots.splice(S.kots.indexOf(k),1);save();render()}
+function vStock(){return `<div class="card tw"><b>Cargo hold</b><table><tr><th>Item</th><th>In stock</th><th>Min</th><th></th><th></th></tr>${S.stock.map((s,i)=>`<tr><td>${s.n}</td><td>${s.q} ${s.u}</td><td>${s.min}</td><td>${s.q<=s.min?`<span class="tag low">Low</span>`:`<span class="tag">OK</span>`}</td><td><button onclick="S.stock[${i}].q+=5;save();render()">+5</button></td></tr>`).join("")}</table><p class="mu">Stock is deducted automatically when a bill is paid.</p></div>`}
+function vCust(){const A=Object.entries(S.cust).sort((a,b)=>b[1].spent-a[1].spent),T=A.filter(([p,c])=>c.opt&&(sg=="All"||seg(c)==sg||(sg=="Lapsed"&&seg(c)=="Lanes")));
+return `<div class="card tw"><b>Guests (${A.length})</b><table><tr><th>Name</th><th>Mobile</th><th>Points</th><th>Visits</th><th>Segment</th></tr>${A.map(([p,c])=>`<tr><td>${c.name}</td><td>${p}</td><td>${c.pts}</td><td>${c.visits}</td><td><span class="tag">${seg(c)=="Lanes"?"Lapsed":seg(c)}</span></td></tr>`).join("")}</table><p class="mu">1 point per ₹10 spent.</p></div>
+<div class="card"><b>WhatsApp campaign</b><div class="g2" style="margin-top:8px"><select onchange="sg=this.value;render()">${["All","New","Regular","Lapsed"].map(x=>`<option ${x==sg?"selected":""}>${x}</option>`).join("")}</select><input type="number" min="1" value="${LD}" onchange="LD=+this.value||14;render()" title="Lapsed after N days"></div>
+<textarea rows="3" style="margin-top:8px" onchange="msg=this.value;render()">${msg}</textarea>
+${sb&&T.length?`<button class="pri" style="margin:8px 0" onclick="T_all()">Send to all (${T.length})</button>`:""}
+${T.map(([p,c])=>`<div class="row"><span>${c.name} · ${p}</span><button onclick="sendWA('${p}',wt('${p}'))">Send</button></div>`).join("")||`<p class="mu">No opted-in guests in this segment.</p>`}<p class="mu">Only guests who agreed to messages are listed.</p></div>`}
+function T_all(){Object.entries(S.cust).filter(([p,c])=>c.opt&&(sg=="All"||seg(c)==sg||(sg=="Lapsed"&&seg(c)=="Lanes"))).forEach(([p],i)=>setTimeout(()=>sendWA(p,wt(p)),i*1200))}
+function vRep(){const td=new Date().toDateString(),B=S.bills.filter(b=>new Date(b.t).toDateString()==td),tot=B.reduce((a,b)=>a+b.tot,0),pay={},it={},hr=Array(12).fill(0);
+B.forEach(b=>{pay[b.pay]=(pay[b.pay]||0)+b.tot;b.items.forEach(i=>it[i.n]=(it[i.n]||0)+i.q);const h=new Date(b.t).getHours()-11;if(h>=0&&h<12)hr[h]+=b.tot});
+const top=Object.entries(it).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...hr),ins=[],low=S.stock.filter(s=>s.q<=s.min),lp=Object.values(S.cust).filter(c=>c.opt&&seg(c)=="Lanes").length;
+if(low.length)ins.push(`Low stock: ${low.map(s=>s.n).join(", ")}. Reorder before the next service.`);if(top[0])ins.push(`${top[0][0]} is today’s best seller. Feature it first on the menu and in offers.`);
+if(B.length)ins.push(`${hr.slice(0,11).indexOf(Math.min(...hr.slice(0,11)))+11}:00 is the slowest hour. Try a time-limited offer then.`);if(lp)ins.push(`${lp} opted-in guests haven’t visited in ${LD}+ days. Send a win-back message from Loyalty.`);
+return `<div class="stats" style="margin-bottom:12px"><div class="card"><span class="mu">Sales today</span><b>₹${tot}</b></div><div class="card"><span class="mu">Bills</span><b>${B.length}</b></div><div class="card"><span class="mu">Avg bill</span><b>₹${B.length?Math.round(tot/B.length):0}</b></div></div>
+<div class="g2"><div class="card"><b>Sales by hour</b><div class="bar" style="margin-top:10px">${hr.map(v=>`<i style="height:${v/mx*100}%" title="₹${v}"></i>`).join("")}</div></div>
+<div class="card"><b>Payments</b>${Object.entries(pay).map(([k,v])=>`<div class="row"><span>${k}</span><span>₹${v}</span></div>`).join("")||`<p class="mu">No bills yet</p>`}</div></div>
+<div class="g2"><div class="card"><b>Top dishes</b>${top.slice(0,5).map(([n,v])=>`<div class="row"><span>${n}</span><span>${v}</span></div>`).join("")||`<p class="mu">No sales yet</p>`}</div>
+<div class="card"><b>Smart insights</b><p class="mu">Rule-based, runs free in your browser.</p>${ins.map(x=>`<p>• ${x}</p>`).join("")||`<p class="mu">Make a few sales to see insights.</p>`}</div></div>`}
+boot();
+</script></body></html>

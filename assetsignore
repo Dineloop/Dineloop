@@ -1,0 +1,8 @@
+wrangler.jsonc
+.assetsignore
+.git
+node_modules
+docs
+sql
+supabase
+README.md

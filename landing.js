@@ -79,8 +79,11 @@ window.renderLanding = function(){
   if(hdr) hdr.style.display = "none";
 
   const hi = lang === "hi";
-  const waNum = (S && S.cfg && S.cfg.ownerPh) ? ("91" + S.cfg.ownerPh) : "";
-  const waHref = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent("Hi DineLoop! I want a free demo for my restaurant.")}` : "#";
+  const rawPh = (S && S.cfg && S.cfg.ownerPh && S.cfg.ownerPh.length===10) ? S.cfg.ownerPh : "7976238444";
+  const waNum = "91" + rawPh;
+  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent("Hi DineLoop! I want a free demo for my restaurant.")}`;
+  const dispPh = `+91 ${rawPh.slice(0,5)} ${rawPh.slice(5)}`;
+  const cEmail = "nikhilsharma6321@gmail.com";
   let cookieOk = false;
   try{ cookieOk = !!localStorage.getItem("dl_cookie_ok"); }catch(e){}
 
@@ -273,23 +276,60 @@ window.renderLanding = function(){
     </div>`).join("")}
   </section>
 
-  <section class="lp-sec">
-    <div class="card">
-      <div class="g2" style="align-items:center">
+  <section id="demo" class="lp-sec">
+    <div class="card" style="padding:22px">
+      <div class="g2" style="align-items:start;gap:24px">
         <div>
-          <h3 style="font:800 28px Outfit,sans-serif;margin:0 0 8px">Ready to simplify your restaurant?</h3>
-          <p class="mu">Leave your details for a 20-minute live walkthrough on your own menu — usually live the same day.</p>
-          <div style="margin-top:12px;display:grid;gap:6px" class="mu">
-            <span>✓ Same-day setup with Menu Photo/PDF OCR</span>
-            <span>✓ Works on your existing laptop & Android phones</span>
-            <span>✓ 14-day free trial, no card required</span>
+          <span class="tag okt">FREE · 20 MINUTES · NO OBLIGATION</span>
+          <h3 style="font:800 clamp(28px,4vw,40px)/1.1 Outfit,sans-serif;margin:10px 0 8px">Book your free demo</h3>
+          <p class="mu" style="font-size:15px">See how DineLoop would run your outlet, from the first KOT to the day-end report. Bring your questions.</p>
+
+          <div style="margin-top:18px">
+            <b style="color:var(--ac);font-size:13px;letter-spacing:.06em;text-transform:uppercase">What happens next</b>
+            <div style="display:grid;gap:10px;margin-top:10px">
+              <div class="row" style="justify-content:flex-start;gap:12px;border:0;padding:2px 0"><span class="tag on">1</span><span><b>We call you</b><br><small class="mu">Within one working day, to understand your outlet and pick a time.</small></span></div>
+              <div class="row" style="justify-content:flex-start;gap:12px;border:0;padding:2px 0"><span class="tag on">2</span><span><b>Live demo on your menu</b><br><small class="mu">20 minutes on a video call. We bill a few of your own dishes.</small></span></div>
+              <div class="row" style="justify-content:flex-start;gap:12px;border:0;padding:2px 0"><span class="tag on">3</span><span><b>Start your free trial</b><br><small class="mu">We set it up with you. Most outlets bill the same day.</small></span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px">
+            <b style="color:var(--ac);font-size:13px;letter-spacing:.06em;text-transform:uppercase">Prefer to talk now?</b>
+            <div class="g2" style="gap:8px;margin-top:10px">
+              <a href="${waHref}" target="_blank" style="text-decoration:none"><div class="card" style="margin:0;padding:10px 12px"><b>💬 WhatsApp</b><div class="mu">Fastest reply</div></div></a>
+              <a href="tel:+${waNum}" style="text-decoration:none"><div class="card" style="margin:0;padding:10px 12px"><b>📞 ${dispPh}</b><div class="mu">Call us</div></div></a>
+              <a href="mailto:${cEmail}" style="text-decoration:none"><div class="card" style="margin:0;padding:10px 12px"><b>✉️ Email</b><div class="mu" style="word-break:break-all">${cEmail}</div></div></a>
+              <div class="card" style="margin:0;padding:10px 12px"><b>🕒 Mon–Sat, 9am–9pm IST</b><div class="mu">📍 Jaipur, Rajasthan, India</div></div>
+            </div>
           </div>
         </div>
-        <div style="display:grid;gap:8px">
-          <div class="g2"><input id="inDmNm" placeholder="Your name *"><input id="inDmPh" placeholder="Mobile number *" maxlength="10" inputmode="numeric"></div>
-          <div class="g2"><input id="inDmRest" placeholder="Restaurant name *"><input id="inDmCity" placeholder="City"></div>
-          <select id="inDmType"><option value="Restaurants">Restaurants</option><option value="Cafes">Cafes</option><option value="Cloud Kitchens">Cloud Kitchens</option><option value="Bakeries">Bakeries</option><option value="QSR">QSR</option><option value="Hotels">Hotels & Bars</option></select>
-          <button class="pri" onclick="submitInlineDemo()">Book a Free Demo →</button>
+
+        <div class="card" style="margin:0;background:var(--sf2)">
+          <div style="display:grid;gap:10px">
+            <div class="g2">
+              <div><label class="mu">Your name *</label><input id="inDmNm" placeholder="Your name"></div>
+              <div><label class="mu">Mobile number *</label><input id="inDmPh" placeholder="98765 43210" maxlength="10" inputmode="numeric"></div>
+            </div>
+            <div class="g2">
+              <div><label class="mu">Restaurant name *</label><input id="inDmRest" placeholder="Restaurant name"></div>
+              <div><label class="mu">City</label><input id="inDmCity" placeholder="Jaipur"></div>
+            </div>
+            <div>
+              <label class="mu">Business type</label>
+              <select id="inDmType">
+                <option value="">Choose one</option>
+                <option value="Restaurants">Restaurants</option>
+                <option value="Cafes">Cafes</option>
+                <option value="Cloud Kitchens">Cloud Kitchens</option>
+                <option value="Bakeries">Bakeries</option>
+                <option value="QSR">QSR</option>
+                <option value="Bars & Pubs">Bars & Pubs</option>
+                <option value="Hotels">Hotels</option>
+              </select>
+            </div>
+            <button class="pri" style="padding:12px" onclick="submitInlineDemo()">Book a Free Demo →</button>
+            <div class="mu" style="text-align:center;font-size:12px">Free, no obligation. We'll only use your number to arrange the demo.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -298,13 +338,23 @@ window.renderLanding = function(){
   <footer class="lp-foot">
     <div>
       <h1 style="margin:0 0 8px">🍽️ DINELOOP</h1>
-      <p class="mu">Cloud POS, Waiter PWA, Anti-Fraud Billing & WhatsApp Loyalty for restaurants, cafes & cloud kitchens across India.</p>
+      <p class="mu">Cloud POS, Waiter PWA, Anti-Fraud Billing & WhatsApp Loyalty for restaurants, cafes, cloud kitchens, bakeries and hotels across India.</p>
     </div>
-    <div><b>Product</b><a href="#feat">Billing & POS</a><a href="#feat">Waiter & Kitchen</a><a href="#feat">Inventory & BOM</a><a href="#price">Pricing</a></div>
-    <div><b>Solutions</b><a href="#sol" onclick="window.lpFmt='Restaurants';renderLanding()">Restaurants</a><a href="#sol" onclick="window.lpFmt='Cafes & Bakeries';renderLanding()">Cafes & Bakeries</a><a href="#sol" onclick="window.lpFmt='Cloud Kitchens';renderLanding()">Cloud Kitchens</a><a href="#sol" onclick="window.lpFmt='QSR & Fast Food';renderLanding()">QSR & Fast Food</a></div>
-    <div><b>Resources</b><a href="javascript:void(0)" onclick="openGuide('setup')">Setup & Help Centre</a><a href="javascript:void(0)" onclick="openGuide('gst')">GST Billing Guide</a><a href="javascript:void(0)" onclick="openGuide('blog')">Anti-Leakage Playbook</a><a href="javascript:void(0)" onclick="openTourModal()">2-Min Video Tour</a></div>
-    <div><b>Legal & Contact</b><a href="javascript:void(0)" onclick="openPrivacyMdl()">Privacy Policy</a><a href="javascript:void(0)" onclick="openTermsMdl()">Terms of Service</a><a href="/order.html?outlet=main" target="_blank">Live QR Menu</a><a href="javascript:void(0)" onclick="openDemoModal()">Book Free Demo →</a></div>
+    <div><b>Product</b><a href="#feat">Billing & POS</a><a href="#feat">Kitchen display</a><a href="#feat">Inventory & BOM</a><a href="#price">Pricing</a></div>
+    <div><b>Company</b><a href="javascript:void(0)" onclick="openWhyBestMdl()">DineLoop is best</a><a href="javascript:void(0)" onclick="openRoadmapMdl()">Integrations roadmap</a><a href="#demo">Book a demo</a><a href="#demo">Contact</a></div>
+    <div><b>Resources</b><a href="javascript:void(0)" onclick="openGuide('setup')">Setup & Help centre</a><a href="javascript:void(0)" onclick="openGuide('gst')">GST billing guide</a><a href="javascript:void(0)" onclick="openGuide('blog')">Anti-leakage playbook</a><a href="#faq">FAQ</a></div>
+    <div>
+      <b>Contact</b>
+      <a href="tel:+${waNum}">📞 ${dispPh}</a>
+      <a href="mailto:${cEmail}" style="word-break:break-all">✉️ ${cEmail}</a>
+      <span class="mu" style="display:block;margin:6px 0">📍 Jaipur, Rajasthan, India</span>
+      <a href="${waHref}" target="_blank" style="display:inline-block;margin-top:6px;padding:7px 12px;border-radius:10px;background:rgba(37,211,102,.15);border:1px solid #25D366;color:#34d399;font-weight:700">💬 WhatsApp Us →</a>
+    </div>
   </footer>
+  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:14px 0 92px;border-top:1px solid rgba(163,157,147,.16)" class="mu">
+    <span>© ${new Date().getFullYear()} DineLoop. Made in India.</span>
+    <span><a href="javascript:void(0)" onclick="openPrivacyMdl()" style="margin-right:14px">Privacy policy</a><a href="javascript:void(0)" onclick="openTermsMdl()">Terms of service</a></span>
+  </div>
 
   ${!cookieOk?`<div class="lp-cookie" id="ckBar">
     <div style="font-size:13px;line-height:1.45;margin-bottom:10px">🍪 We use essential storage to run DineLoop POS & sync your session securely. <a href="javascript:void(0)" onclick="openPrivacyMdl()">Privacy policy</a></div>
@@ -315,8 +365,8 @@ window.renderLanding = function(){
   </div>`:""}
 
   <div class="lp-flt">
-    <button class="pri" style="border-radius:99px;padding:10px 16px" onclick="openDemoModal()">📅 Book a Free Demo</button>
-    <a class="lp-wa" href="${waHref}" ${waNum?`target="_blank"`:`onclick="event.preventDefault();openDemoModal()"`} title="WhatsApp Us">💬</a>
+    <button class="pri" style="border-radius:99px;padding:10px 16px" onclick="document.getElementById('demo')?.scrollIntoView({behavior:'smooth'})">📅 Book a Free Demo</button>
+    <a class="lp-wa" href="${waHref}" target="_blank" title="WhatsApp Us">💬</a>
   </div>
   `;
 };
@@ -329,6 +379,26 @@ window.openGuide = function(key){
 
 window.openTermsMdl = function(){
   showMdl(`<b>Terms of Service · DineLoop</b><p class="mu" style="margin:10px 0;line-height:1.55">DineLoop provides cloud POS, kitchen display, inventory and opt-in loyalty tools on a subscription basis. Each restaurant owns its menu, bills, and guest records.</p><button class="pri" onclick="closeMdl()">Close</button>`);
+};
+
+window.openWhyBestMdl = function(){
+  showMdl(`<b>Why DineLoop is Best for Your Restaurant</b>
+    <div style="margin:10px 0;display:grid;gap:8px;line-height:1.55" class="mu">
+      <span>✓ <b>All-in-One:</b> Billing POS + Separate Waiter PWA + Kitchen KDS + Loyalty + Inventory BOM + AI OCR — no extra paid add-ons.</span>
+      <span>✓ <b>Anti-Fraud Protection:</b> 4-digit Prepaid Slip Verification Code & live Waiter table occupancy sync.</span>
+      <span>✓ <b>Zero Hardware Lock-in:</b> Install on any Windows laptop or Android phone in 10 seconds.</span>
+    </div>
+    <div class="tbs"><button class="pri" onclick="closeMdl();openSignupModal()">Start 14-Day Free Trial</button><button onclick="closeMdl()">Close</button></div>`);
+};
+
+window.openRoadmapMdl = function(){
+  showMdl(`<b>DineLoop Integrations & Ecosystem</b>
+    <div style="margin:10px 0;display:grid;gap:8px;line-height:1.55" class="mu">
+      <span>• <b>Live Now:</b> Exact-Amount UPI QR, Official WhatsApp Cloud API, Gemini AI Menu OCR, Tally XML, GSTR-1 Export, Custom Webhooks.</span>
+      <span>• <b>Aggregator Inbox:</b> Unified Swiggy, Zomato, ONDC & WhatsApp order desk + Own Delivery Riders.</span>
+      <span>• <b>Partner APIs:</b> Direct automated Swiggy/Zomato menu & order sync (rolling out after partner approval).</span>
+    </div>
+    <button class="pri" onclick="closeMdl()">Close</button>`);
 };
 
 // ---------- ANIMATED 2-MINUTE PRODUCT TOUR VIDEO PLAYER + WEBM EXPORTER ----------
@@ -428,7 +498,7 @@ window.recordTourVideo = function(){
 
 window.submitInlineDemo = async function(){
   const name = ($("#inDmNm").value||"").trim(), phone = ($("#inDmPh").value||"").replace(/\D/g,"");
-  const rest = ($("#inDmRest").value||"").trim(), city = ($("#inDmCity").value||"").trim(), btype = $("#inDmType").value;
+  const rest = ($("#inDmRest").value||"").trim(), city = ($("#inDmCity").value||"").trim(), btype = $("#inDmType").value || "Restaurants";
   if(!name || phone.length!==10) return toast("Enter your name & 10-digit mobile");
   if(sb){
     const r = await sb.from("demo_leads").insert({name, restaurant_name:`${rest} [${btype}]`, city, phone, outlets:1, status:"new"});

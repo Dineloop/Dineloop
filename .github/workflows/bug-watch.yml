@@ -17,7 +17,7 @@ jobs:
         run: |
           FAILS=""
           for path in "/" "/waiter.html" "/order.html" "/display.html" "/landing.js" "/crm.js" "/erp.js" "/platform.js" "/sw.js"; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "${SITE_URL}${path}")
+            code=$(curl -sL -o /dev/null -w "%{http_code}" "${SITE_URL}${path}")
             echo "${path} -> HTTP ${code}"
             if [ "$code" != "200" ]; then
               FAILS="${FAILS}${path} returned HTTP ${code}\n"

@@ -115,6 +115,7 @@ a{color:var(--ac)}.mu{color:var(--mu);font-size:13px}#rcp{display:none}
     <span id="clk"></span>
     <button class="sm pri" id="btnInstall" style="display:none" onclick="installApp()">📲 Install</button>
     <button class="sm" id="btnLang" onclick="toggleLang()" title="English / Hindi">EN</button>
+    <button class="sm" id="btnFeedback" onclick="openAppFeedbackMdl()" title="Send Feedback">💬 Feedback</button>
     <button class="sm" id="btnTheme" onclick="cycleTheme()" title="Switch Theme">🎨</button>
     <button class="sm" id="btnOut" style="display:none" onclick="doLogout()">Logout</button>
   </div>
@@ -310,7 +311,7 @@ const PLATFORM_ROLES=["superadmin","coadmin","qa_tester","bug_checker","support"
 const ROLE_LABELS={superadmin:"Super Admin (Owner)",coadmin:"Co-Admin (Partner)",qa_tester:"QA Tester",bug_checker:"Bug Checker",support:"Support / Onboarding",admin:"Restaurant Admin",manager:"Manager",cashier:"Cashier",waiter:"Waiter",kitchen:"Kitchen"};
 const isPlatAdmin=()=>trueRole==="superadmin"||trueRole==="coadmin";
 const isPlatTeam=()=>PLATFORM_ROLES.includes(trueRole);
-let restList=[],roleList=[],restInfo=null,pubOrders=[],demoLeads=[],bugList=[],qaReport=[],qaBusy=false;
+let restList=[],roleList=[],restInfo=null,pubOrders=[],demoLeads=[],bugList=[],feedbackList=[],qaReport=[],qaBusy=false;
 let tab="bill",tb=TB[0]||"T1",q="",cat="All",ph="",nmv="",op=false,rd=false,ap=false,link="",lastB=null,LD=14,sg="Lapsed";
 let msg="Hi {name}, we miss you at {rName}! Show this message for a special treat on your next visit.";
 let ocrRows=[],ocrBusy=false,aiAns="",aiBusy=false,kdsStation="All",kdsExpo=false,payGiftAmt=0,payGiftCode="";
@@ -459,6 +460,8 @@ async function loadSaasLists(){
   if(isPlatTeam()){
     const r4=await sb.from("bug_reports").select("*").order("created_at",{ascending:false}).limit(60);
     if(!r4.error&&r4.data)bugList=r4.data;
+    const r5=await sb.from("site_feedback").select("*").order("created_at",{ascending:false}).limit(60);
+    if(!r5.error&&r5.data)feedbackList=r5.data;
   }
 }
 
@@ -1879,6 +1882,21 @@ function vSaas(){
     </tr>`).join("")||`<tr><td colspan="6" class="mu">No demo requests yet.</td></tr>`}
     </table>
   </div>`:""}
+  <div class="card tw">
+    <div class="row" style="border:0;padding:0">
+      <b>💬 Website & App Feedback (${feedbackList.length})</b>
+      ${trueRole==="superadmin"&&activeOutlet==="main"?`<button class="sm ok" onclick="loadRichDemoSample()">✨ Fill Sample Demo Sales (Buyer Showcase)</button>`:""}
+    </div>
+    <table style="margin-top:8px"><tr><th>User / Source</th><th>Rating</th><th>Message</th><th>Status</th><th>Actions</th></tr>
+    ${feedbackList.map(f=>`<tr>
+      <td><b>${esc(f.name)}</b> (${esc(f.role)})<br><small class="mu">${esc(f.source)} · ${esc(f.restaurant_id)}</small></td>
+      <td>${"★".repeat(Math.max(1,Math.min(5,+f.rating||5)))}</td>
+      <td style="max-width:340px">${esc(f.message)}</td>
+      <td><span class="tag ${f.status==="reviewed"?"okt":""}">${esc(f.status)}</span></td>
+      <td>${f.status!=="reviewed"?`<button class="sm ok" onclick="markFeedbackReviewed(${f.id})">Reviewed</button>`:`<small class="mu">Done</small>`}</td>
+    </tr>`).join("")||`<tr><td colspan="5" class="mu">No feedback yet.</td></tr>`}
+    </table>
+  </div>
   <div class="card tw"><b>All Users Across Platform (${roleList.length})</b>
     <table style="margin-top:8px"><tr><th>Email</th><th>Name</th><th>Outlet</th><th>Role</th><th>Status</th></tr>
     ${roleList.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.display_name)}</td><td>${esc(u.restaurant_id)}</td><td><span class="tag">${esc(ROLE_LABELS[u.role]||u.role)}</span></td><td>${u.active?"Active":"Disabled"}</td></tr>`).join("")}
@@ -2138,6 +2156,54 @@ async function upgradeRestPro(id){
   const r=await sb.from("restaurants").update({plan:"pro",active:true}).eq("id",id);
   if(r.error)return toast(r.error.message);
   await loadSaasLists();render();toast(id+" upgraded to Pro!");
+}
+function openAppFeedbackMdl(){
+  showMdl(`<b>💬 Send DineLoop Feedback</b>
+    <p class="mu">Share any suggestion, improvement, or issue directly with the platform team.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <select id="apFbRt"><option value="5">★★★★★ 5 — Loving it</option><option value="4">★★★★☆ 4 — Good</option><option value="3">★★★☆☆ 3 — Average</option><option value="2">★★☆☆☆ 2 — Issue</option><option value="1">★☆☆☆☆ 1 — Bug / Bad</option></select>
+      <textarea id="apFbMsg" rows="3" placeholder="Write your feedback or feature idea..."></textarea>
+    </div>
+    <div class="tbs"><button class="pri" onclick="submitAppFeedback()">Submit Feedback</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+async function submitAppFeedback(){
+  const rating=+$("#apFbRt").value||5,message=($("#apFbMsg").value||"").trim();
+  if(message.length<3)return toast("Write at least 3 characters");
+  if(sb){
+    const r=await sb.from("site_feedback").insert({source:"app",restaurant_id:activeOutlet,name:activeName||"Staff",role:myRole,rating,message,status:"new"});
+    if(r.error)return toast(r.error.message);
+  }
+  closeMdl();toast("Feedback sent! Thank you.");
+}
+async function markFeedbackReviewed(id){
+  const r=await sb.from("site_feedback").update({status:"reviewed"}).eq("id",id);
+  if(r.error)return toast(r.error.message);
+  await loadSaasLists();render();toast("Marked reviewed");
+}
+function loadRichDemoSample(){
+  if(activeOutlet!=="main")return toast("Switch to main outlet first");
+  const now=Date.now(),hr=3600000;
+  const sampleBills=[
+    {no:101,invNo:"DL-101",t:now-hr*6,table:"T2",mode:"Dine-In",sub:520,disc:0,tax:26,tot:546,pay:"UPI",payLabel:"UPI",ph:"9876543210",nm:"Aarav Sharma",items:[{n:"Masala Dosa",q:2,p:120},{n:"Paneer Tikka",q:1,p:260}]},
+    {no:102,invNo:"DL-102",t:now-hr*5,table:"T4",mode:"Dine-In",sub:840,disc:40,tax:40,tot:840,pay:"Cash",payLabel:"Cash",ph:"9829011223",nm:"Priya Verma",items:[{n:"Dal Makhani",q:1,p:220},{n:"Paneer Butter Masala",q:1,p:270},{n:"Butter Naan",q:4,p:55},{n:"Sweet / Mango Lassi",q:1,p:100}]},
+    {no:103,invNo:"DL-103",t:now-hr*4,table:"Takeaway",mode:"Swiggy",sub:420,disc:0,tax:21,tot:441,pay:"UPI",payLabel:"Swiggy",ph:"",nm:"",items:[{n:"Veg Hakka Noodles",q:1,p:180},{n:"Chilli Paneer Dry",q:1,p:240}]},
+    {no:104,invNo:"DL-104",t:now-hr*3,table:"T1",mode:"Dine-In",sub:680,disc:0,tax:34,tot:714,pay:"Card",payLabel:"Card",ph:"9928055441",nm:"Rohan Mehta",items:[{n:"Chicken Dum Biryani",q:2,p:310},{n:"Masala Chai",q:1,p:40}]},
+    {no:105,invNo:"DL-105",t:now-hr*2,table:"Counter",mode:"Zomato",sub:530,disc:0,tax:26.5,tot:557,pay:"UPI",payLabel:"Zomato",ph:"",nm:"",items:[{n:"Farmhouse Veg Pizza",q:1,p:290},{n:"White Sauce Alfredo Pasta",q:1,p:240}]},
+    {no:106,invNo:"DL-106",t:now-hr*1,table:"T5",mode:"Dine-In",sub:380,disc:0,tax:19,tot:399,pay:"Cash",payLabel:"Cash",ph:"9876543210",nm:"Aarav Sharma",items:[{n:"Sizzling Brownie Ice Cream",q:1,p:190},{n:"Oreo / KitKat Thick Shake",q:1,p:170}]}
+  ];
+  sampleBills.forEach(b=>{if(!S.bills.some(x=>x.invNo===b.invNo))S.bills.push(b);});
+  S.cfg.invNext=Math.max(S.cfg.invNext||1,107);
+  if(!S.stock.length)S.stock=[
+    {id:1,n:"Paneer (kg)",q:18,min:5,u:"kg"},
+    {id:2,n:"Basmati Rice (kg)",q:42,min:10,u:"kg"},
+    {id:3,n:"Cooking Oil (L)",q:4,min:8,u:"L"},
+    {id:4,n:"Amul Butter (500g)",q:14,min:5,u:"pcs"}
+  ];
+  S.cust["9876543210"]=S.cust["9876543210"]||{name:"Aarav Sharma",pts:145,visits:5,spent:3240,last:now-hr,op:true};
+  S.cust["9829011223"]=S.cust["9829011223"]||{name:"Priya Verma",pts:90,visits:3,spent:2100,last:now-hr*5,op:true};
+  S.cust["9928055441"]=S.cust["9928055441"]||{name:"Rohan Mehta",pts:65,visits:2,spent:1480,last:now-hr*3,op:true};
+  save();render();
+  toast("Loaded 6 Sample Sales Bills, Stock & Guests on main!");
 }
 
 // ---------- KEYBOARD SHORTCUTS ----------

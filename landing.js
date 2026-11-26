@@ -328,7 +328,7 @@ window.renderLanding = function(){
               </select>
             </div>
             <button class="pri" style="padding:12px" onclick="submitInlineDemo()">Book a Free Demo →</button>
-            <div class="mu" style="text-align:center;font-size:12px">Free, no obligation. We'll only use your number to arrange the demo.</div>
+            <div class="mu" style="text-align:center;font-size:12px">Free, no obligation. <a href="javascript:void(0)" onclick="openFeedbackModal()" style="color:var(--ac)">Want to share feedback? →</a></div>
           </div>
         </div>
       </div>
@@ -341,7 +341,7 @@ window.renderLanding = function(){
       <p class="mu">Cloud POS, Waiter PWA, Anti-Fraud Billing & WhatsApp Loyalty for restaurants, cafes, cloud kitchens, bakeries and hotels across India.</p>
     </div>
     <div><b>Product</b><a href="#feat">Billing & POS</a><a href="#feat">Kitchen display</a><a href="#feat">Inventory & BOM</a><a href="#price">Pricing</a></div>
-    <div><b>Company</b><a href="javascript:void(0)" onclick="openWhyBestMdl()">DineLoop is best</a><a href="javascript:void(0)" onclick="openRoadmapMdl()">Integrations roadmap</a><a href="#demo">Book a demo</a><a href="#demo">Contact</a></div>
+    <div><b>Company</b><a href="javascript:void(0)" onclick="openWhyBestMdl()">DineLoop is best</a><a href="javascript:void(0)" onclick="openRoadmapMdl()">Integrations roadmap</a><a href="javascript:void(0)" onclick="openFeedbackModal()">💬 Give Feedback</a><a href="#demo">Book a demo</a><a href="#demo">Contact</a></div>
     <div><b>Resources</b><a href="javascript:void(0)" onclick="openGuide('setup')">Setup & Help centre</a><a href="javascript:void(0)" onclick="openGuide('gst')">GST billing guide</a><a href="javascript:void(0)" onclick="openGuide('blog')">Anti-leakage playbook</a><a href="#faq">FAQ</a></div>
     <div>
       <b>Contact</b>
@@ -608,4 +608,35 @@ window.submitDemoLead = async function(){
   }
   closeMdl();
   toast("Demo request received! We will contact you shortly.");
+};
+
+window.openFeedbackModal = function(){
+  showMdl(`<b>💬 Share Your Feedback About DineLoop</b>
+    <p class="mu">Tell us what you liked or what feature you want next.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <div class="g2">
+        <input id="fbNm" placeholder="Your Name *">
+        <select id="fbRt"><option value="5">★★★★★ 5 — Excellent</option><option value="4">★★★★☆ 4 — Good</option><option value="3">★★★☆☆ 3 — Okay</option><option value="2">★★☆☆☆ 2 — Needs work</option><option value="1">★☆☆☆☆ 1 — Issue</option></select>
+      </div>
+      <select id="fbRole"><option value="Restaurant Owner">Restaurant / Café Owner</option><option value="Buyer / Agency">Buyer / Partner Agency</option><option value="Visitor">Website Visitor</option></select>
+      <textarea id="fbMsg" rows="3" placeholder="Write your feedback or suggestion... *"></textarea>
+    </div>
+    <div class="tbs">
+      <button class="pri" onclick="submitSiteFeedback()">Submit Feedback</button>
+      <button onclick="closeMdl()">Cancel</button>
+    </div>`);
+};
+
+window.submitSiteFeedback = async function(){
+  const name = ($("#fbNm").value||"").trim() || "Visitor";
+  const rating = +($("#fbRt").value||5);
+  const role = ($("#fbRole").value||"Visitor");
+  const message = ($("#fbMsg").value||"").trim();
+  if(message.length < 3) return toast("Please write at least 3 characters");
+  if(sb){
+    const r = await sb.from("site_feedback").insert({source:"landing", restaurant_id:"main", name, role, rating, message, status:"new"});
+    if(r.error) return toast(r.error.message);
+  }
+  closeMdl();
+  toast("Thanks for your feedback!");
 };

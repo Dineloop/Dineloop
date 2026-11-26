@@ -131,7 +131,7 @@ let tb="T1",cat="All",q="";
 
 function toast(t){const e=$("#toast");e.textContent=t;e.style.display="block";clearTimeout(toast._t);toast._t=setTimeout(()=>e.style.display="none",2500)}
 const M=id=>S.menu.find(x=>x.id==id);
-const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
+const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""});
 
 function save(){
   try{localStorage.setItem("dl2_"+activeOutlet,JSON.stringify(S));}catch(e){}
@@ -173,17 +173,18 @@ async function doLogin(){const r=await sb.auth.signInWithPassword({email:$("#em"
 async function doLogout(){if(sb)await sb.auth.signOut();location.reload();}
 
 function itemUnitPrice(l){
+  if(l.openItem)return R(+l.p||0);
   const m=M(l.id);if(!m)return 0;let p=+m.p||0;
   if(l.v&&m.v){const vr=m.v.find(x=>x.n===l.v);if(vr)p=+vr.p||p;}
   if(Array.isArray(l.add)&&m.a)l.add.forEach(an=>{const ad=m.a.find(x=>x.n===an);if(ad)p+=(+ad.p||0);});
   return R(p);
 }
-function itemLabel(l){const m=M(l.id);if(!m)return"";let s=m.n;if(l.v)s+=` (${l.v})`;if(l.add&&l.add.length)s+=` +${l.add.join(",")}`;return s;}
+function itemLabel(l){if(l.openItem)return l.n||"Special Item";const m=M(l.id);if(!m)return"";let s=m.n;if(l.v)s+=` (${l.v})`;if(l.add&&l.add.length)s+=` +${l.add.join(",")}`;return s;}
 function calc(t=tb){
-  const o=(S.open[t]||[]).filter(l=>M(l.id)),mt=meta(t);
+  const o=(S.open[t]||[]).filter(l=>l.openItem||M(l.id)),mt=meta(t);
   let sub=0,taxSum=0;
   o.forEach(l=>{
-    const m=M(l.id),up=itemUnitPrice(l),line=up*l.q,rate=(m.g!==null&&m.g!==undefined)?+m.g:+S.cfg.taxPct;
+    const m=l.openItem?{g:null}:M(l.id),up=itemUnitPrice(l),line=up*l.q,rate=(m.g!==null&&m.g!==undefined)?+m.g:+S.cfg.taxPct;
     if(S.cfg.taxInc){const b=line/(1+rate/100);sub+=b;taxSum+=(line-b);}else{sub+=line;taxSum+=line*(rate/100);}
   });
   sub=R(sub);
@@ -279,13 +280,36 @@ function pay(m){
   if(it.length){S.kots.push({id:++S.kn,table:tb,mode:c.mt.mode,prepaid:true,by:activeName,items:it,st:0,t:Date.now()});o.forEach(l=>l.sent=l.q);}
   const invNo=(S.cfg.invPrefix||"DL-")+String(S.cfg.invNext||1).padStart(4,"0");S.cfg.invNext=(S.cfg.invNext||1)+1;
   S.bills.push({no:S.bills.length+1,invNo,t:Date.now(),table:tb,mode:c.mt.mode,items:c.o.map(l=>({n:itemLabel(l),q:l.q,p:itemUnitPrice(l)})),sub:c.sub,disc:c.disc,tax:c.tax,tot:c.due,pay:m,payLabel:m,ph:"",cashier:activeName+" (Waiter)"});
-  if(!c.paidAmt)c.o.forEach(l=>{const d=M(l.id),s=S.stock.find(x=>x.n===d.s);if(s)s.q=R(Math.max(0,s.q-d.u*l.q));});
-  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
-  save();render();toast("Collected ₹"+c.due+" ("+invNo+")");
+  if(!c.paidAmt)c.o.forEach(l=>{if(l.openItem)return;const d=M(l.id),s=d&&S.stock.find(x=>x.n===d.s);if(s)s.q=R(Math.max(0,s.q-d.u*l.q));});
+  clearTable();toast("Collected ₹"+c.due+" ("+invNo+")");
 }
 function clearTable(){
-  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
-  save();render();toast(tb+" cleared");
+  const old=meta(tb),kids=Array.isArray(old.joined)?[...old.joined]:[];
+  kids.forEach(kt=>{if(kt!==tb){S.open[kt]=[];S.openMeta[kt]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};}});
+  S.open[tb]=[];S.openMeta[tb]={mode:tb==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+  save();render();toast((kids.length>1?kids.join("+"):tb)+" cleared");
+}
+function openWaiterJoinMdl(){
+  const cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&!meta(t).linkedTo);
+  const mt=meta(tb);
+  $("#mdlHost").innerHTML=`<div class="mdl-bg" onclick="if(event.target===this)closeMdl()"><div class="mdl">
+    <b>🔗 Join Tables (${esc(tb)})</b><p class="mu">Link family tables into one combined bill.</p>
+    <input id="wJnGrp" placeholder="Family Name (optional)" value="${esc(mt.groupName||"")}" style="margin:6px 0">
+    <input id="wJnPax" type="number" min="1" placeholder="Total Guests" value="${mt.pax||8}" style="margin-bottom:8px">
+    <div class="tbs">${cands.map(t=>`<label class="tag"><input type="checkbox" class="wjnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}</div>
+    <div class="tbs"><button class="pri" onclick="doWaiterJoin()">Join Tables</button><button onclick="closeMdl()">Cancel</button></div>
+  </div></div>`;
+}
+function doWaiterJoin(){
+  const picks=[...document.querySelectorAll(".wjnk:checked")].map(x=>x.value);if(!picks.length)return toast("Select tables");
+  const mt=meta(tb),grp=($("#wJnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#wJnPax").value||0)||6;
+  mt.occ=true;mt.pax=pax;mt.groupName=grp;mt.waiterName=activeName;mt.updatedAt=mt.updatedAt||Date.now();
+  mt.joined=[...new Set([tb,...(mt.joined||[]),...picks])];
+  picks.forEach(pt=>{
+    const o=S.open[pt]||[];if(o.length){S.open[tb]=(S.open[tb]||[]).concat(o);S.open[pt]=[];}
+    const pm=meta(pt);pm.occ=true;pm.linkedTo=tb;pm.groupName=grp;pm.updatedAt=mt.updatedAt;
+  });
+  closeMdl();save();render();toast("Joined "+mt.joined.join("+"));
 }
 
 function render(){
@@ -324,18 +348,22 @@ function render(){
     </div>
     <div class="tgrid">${TB.map(t=>{
       const tc=calc(t),cnt=tc.o.reduce((a,l)=>a+l.q,0);
+      if(tc.mt.linkedTo)return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${esc(tc.mt.linkedTo)}';render()"><b>${esc(t)}</b><small style="color:var(--ac)">🔗 ${esc(tc.mt.linkedTo)}</small></button>`;
       const mins=tc.mt.updatedAt?Math.max(0,Math.round((Date.now()-tc.mt.updatedAt)/6e4)):0;
       let subTxt="Free";
       if(cnt)subTxt=tc.mt.prepaid?(tc.due>0?`Due ₹${tc.due}`:`✓ Paid`):`Unpaid ₹${tc.due}`;
       else if(tc.mt.occ)subTxt=`🪑 ${tc.mt.pax||1} Seated`;
       if((cnt||tc.mt.occ)&&mins)subTxt+=` · ${mins}m`;
       const clr=cnt?(tc.mt.prepaid&&tc.due===0?"var(--ok)":"var(--wr)"):(tc.mt.occ?"var(--wn)":"var(--mu)");
-      return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${t}';render()"><b>${t}</b><small style="color:${t===tb?"inherit":clr}">${subTxt}</small></button>`;
+      const jn=(tc.mt.joined&&tc.mt.joined.length>1)?` 🔗${tc.mt.joined.length}`:"";
+      return `<button class="tbtn ${t===tb?"on":""}" onclick="tb='${esc(t)}';render()"><b>${esc(t)}${jn}</b><small style="color:${t===tb?"inherit":clr}">${subTxt}</small></button>`;
     }).join("")}</div>
     <div class="tbs" style="margin-top:9px;margin-bottom:0">
-      <span class="mu">Guests at ${esc(tb)}:</span>
-      ${[1,2,3,4,6,8].map(n=>`<button class="sm ${mt.occ&&mt.pax===n?"on":""}" onclick="setOcc(${n})">🪑 ${n}</button>`).join("")}
-      ${mt.occ&&!c.o.length?`<button class="sm wr" onclick="setOcc(0)">Free Table</button>`:""}
+      <span class="mu">Guests (${esc(tb)}):</span>
+      ${[2,4,6,8,12,20].map(n=>`<button class="sm ${mt.occ&&mt.pax===n?"on":""}" onclick="setOcc(${n})">🪑 ${n}</button>`).join("")}
+      <button class="sm" onclick="const p=+(prompt('Exact guests/candidates count:',${+mt.pax||15})||0);if(p>0)setOcc(p)">Custom</button>
+      ${tb!=="Takeaway"&&tb!=="Counter"?`<button class="sm ok" onclick="openWaiterJoinMdl()">🔗 Join</button>`:""}
+      ${mt.occ&&!c.o.length?`<button class="sm wr" onclick="setOcc(0)">Free</button>`:""}
     </div>
   </div>
   <div class="g2">

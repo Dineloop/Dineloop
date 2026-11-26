@@ -526,7 +526,7 @@ function allowedTabs(){return ROLE_TABS[myRole]||ROLE_TABS.admin}
 function go(k){tab=k;render()}
 const M=id=>S.menu.find(x=>x.id==id);
 const seg=c=>(Date.now()-(c.last||0))/864e5>=LD?"Lapsed":c.visits>=3?"Regular":"New";
-const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""});
+const meta=t=>(S.openMeta[t]=S.openMeta[t]||{mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""});
 
 function render(){
   if(myRole==="waiter")return waiterRedirectScreen();
@@ -719,9 +719,11 @@ function renderTabsOnly(){
   const el=$("#tbBar");if(!el)return;
   el.innerHTML=TB.map(t=>{
     const c=calc(t),cnt=c.o.reduce((a,l)=>a+l.q,0);
+    if(c.mt.linkedTo)return `<button class="${t==tb?"on":""}" onclick="tb='${esc(c.mt.linkedTo)}';render()" title="Joined with ${esc(c.mt.linkedTo)}">${esc(t)} 🔗${esc(c.mt.linkedTo)}</button>`;
+    const joinTxt=(c.mt.joined&&c.mt.joined.length>1)?` 🔗${c.mt.joined.length}`:"";
     const paxTxt=c.mt.occ?` 🪑${c.mt.pax||""}`:"";
     const badge=c.mt.prepaid?(c.due>0?` 🟡₹${c.due}`:` ✓${c.mt.prepaidCode}`):(cnt?` (${cnt})`:paxTxt);
-    return `<button class="${t==tb?"on":""}" onclick="tb='${t}';render()">${t}${badge}</button>`;
+    return `<button class="${t==tb?"on":""}" onclick="tb='${esc(t)}';render()">${esc(t)}${joinTxt}${badge}</button>`;
   }).join("");
 }
 function toggleTableOcc(t){
@@ -740,6 +742,7 @@ function vBill(){
       <div class="row" style="border:0;padding:0">
         <b>Menu ${hhOn?`<span class="tag okt">🎉 Happy Hour -${S.cfg.happyHour.pct}%</span>`:""}</b>
         <div class="tbs" style="margin:0">
+          <button class="sm ok" onclick="openPartyPkgMdl()">👥 Party / Per-Guest</button>
           <button class="sm" onclick="openItemFormMdl()">+ Open Item</button>
           <button class="sm" onclick="openInboxMdl()">📥 Inbox (${pubOrders.length})</button>
           <button class="sm" onclick="openFloorMapMdl()">🗺 Floor (${busyCnt}/${TB.length})</button>
@@ -760,10 +763,12 @@ function vBill(){
       </div>
       <div class="tbs" id="tbBar" style="margin-top:8px"></div>
       <div class="row" style="background:rgba(226,183,92,.08);padding:6px 9px;border-radius:9px;margin-bottom:8px;border:0">
-        <span style="font-size:13px">${mt.occ||((S.open[tb]||[]).length)?`🪑 <b style="color:var(--wn)">Occupied</b>${mt.pax?` (${mt.pax}G)`:""}${mt.waiterName?` · ${esc(mt.waiterName)}`:""}`:`<span class="mu">🪑 Table Free</span>`}</span>
+        <span style="font-size:13px">${mt.linkedTo?`🔗 <b>Joined with ${esc(mt.linkedTo)}</b>`:(mt.occ||((S.open[tb]||[]).length)?`🪑 <b style="color:var(--wn)">Occupied</b>${mt.groupName?` · <b>${esc(mt.groupName)}</b>`:""}${mt.joined&&mt.joined.length>1?` (${esc(mt.joined.join("+"))})`:""}${mt.pax?` (${mt.pax}G)`:""}${mt.waiterName?` · ${esc(mt.waiterName)}`:""}`:`<span class="mu">🪑 Table Free</span>`)}</span>
         <div class="tbs" style="margin:0">
-          ${!(S.open[tb]||[]).length?`<button class="sm" onclick="toggleTableOcc('${esc(tb)}')">${mt.occ?"Free":"Seat"}</button>`:""}
-          ${(S.open[tb]||[]).length?`<button class="sm" onclick="holdOrder()">Hold</button><button class="sm" onclick="openMoveMergeMdl()">Move/Merge</button><button class="sm" onclick="openSplitBillMdl()">Split Bill</button>`:""}
+          ${mt.linkedTo?`<button class="sm pri" onclick="tb='${esc(mt.linkedTo)}';render()">Open ${esc(mt.linkedTo)}</button><button class="sm wr" onclick="unjoinSingleTable('${esc(tb)}')">Unjoin</button>`:""}
+          ${!mt.linkedTo&&!(S.open[tb]||[]).length?`<button class="sm" onclick="toggleTableOcc('${esc(tb)}')">${mt.occ?"Free":"Seat"}</button>`:""}
+          ${!mt.linkedTo&&tb!=="Takeaway"&&tb!=="Counter"?`<button class="sm" onclick="openJoinTablesMdl()">🔗 Join Tables</button>`:""}
+          ${!mt.linkedTo&&(S.open[tb]||[]).length?`<button class="sm" onclick="holdOrder()">Hold</button><button class="sm" onclick="openMoveMergeMdl()">Move</button><button class="sm" onclick="openSplitBillMdl()">Split</button>`:""}
           ${(S.holds||[]).length?`<button class="sm ok" onclick="openHoldsMdl()">Holds (${S.holds.length})</button>`:""}
         </div>
       </div>
@@ -798,17 +803,140 @@ function addOpenItem(){
   const mt=meta(tb);mt.occ=true;mt.updatedAt=Date.now();closeMdl();save();render();
 }
 function openFloorMapMdl(){
-  showMdl(`<b>🗺 Live Table Floor Map</b>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin:12px 0">
+  showMdl(`<b>🗺 Live Table & Hall Floor Map (${TB.length})</b>
+    <p class="mu">Big restaurant? Use Setup Floor to add 10–50+ tables & Party Halls anytime.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin:12px 0;max-height:55vh;overflow:auto">
       ${TB.map(t=>{
         const c=calc(t),cnt=c.o.reduce((a,l)=>a+l.q,0);
         const mins=c.mt.updatedAt?Math.max(0,Math.round((Date.now()-c.mt.updatedAt)/6e4)):0;
-        const clr=c.mt.prepaid?(c.due>0?"var(--wn)":"var(--ok)"):(cnt?"var(--wr)":(c.mt.occ?"var(--ac)":"var(--ln)"));
-        const st=c.mt.prepaid?(c.due>0?`Due ₹${c.due}`:`✓${c.mt.prepaidCode}`):(cnt?`₹${c.tot}`:(c.mt.occ?`🪑 ${c.mt.pax}G`:"Free"));
-        return `<button style="border-color:${clr};text-align:center;padding:10px 6px" onclick="tb='${esc(t)}';closeMdl();render()"><b>${esc(t)}</b><br><small>${st}${c.mt.occ&&mins?` · ⏱${mins}m`:""}</small></button>`;
+        const clr=c.mt.linkedTo?"var(--ac)":(c.mt.prepaid?(c.due>0?"var(--wn)":"var(--ok)"):(cnt?"var(--wr)":(c.mt.occ?"var(--ac)":"var(--ln)")));
+        const st=c.mt.linkedTo?`🔗 ${esc(c.mt.linkedTo)}`:(c.mt.prepaid?(c.due>0?`Due ₹${c.due}`:`✓${c.mt.prepaidCode}`):(cnt?`₹${c.tot}`:(c.mt.occ?`🪑 ${c.mt.pax}G`:"Free")));
+        const clickT=c.mt.linkedTo||t;
+        return `<button style="border-color:${clr};text-align:center;padding:10px 6px" onclick="tb='${esc(clickT)}';closeMdl();render()"><b>${esc(t)}</b>${c.mt.groupName?`<br><small style="color:var(--ac)">${esc(c.mt.groupName)}</small>`:""}<br><small>${st}${c.mt.occ&&mins&&!c.mt.linkedTo?` · ⏱${mins}m`:""}</small></button>`;
       }).join("")}
     </div>
-    <button onclick="closeMdl()">Close</button>`);
+    <div class="tbs"><button class="pri sm" onclick="openFloorSetupMdl()">+ Setup Tables / Party Halls</button><button onclick="closeMdl()">Close</button></div>`);
+}
+function openFloorSetupMdl(){
+  const curTables=TB.filter(x=>x!=="Counter"&&x!=="Takeaway");
+  showMdl(`<b>🏢 Big Restaurant Tables & Party Hall Setup</b>
+    <p class="mu">Add 8 to 50+ tables, AC/Garden zones, and Party/Banquet Halls in 1 click.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <div class="tbs">
+        <button class="sm" onclick="presetFloorTables(8)">8 Tables</button>
+        <button class="sm" onclick="presetFloorTables(16)">16 Tables</button>
+        <button class="sm" onclick="presetFloorTables(24)">24 Tables</button>
+        <button class="sm" onclick="presetFloorTables(36)">36 Tables</button>
+      </div>
+      <div class="tbs">
+        <button class="sm ok" onclick="appendFloorZone('Party Hall 1')">+ Party Hall 1</button>
+        <button class="sm ok" onclick="appendFloorZone('Party Hall 2')">+ Party Hall 2</button>
+        <button class="sm" onclick="appendFloorRange('AC',6)">+ AC1..AC6</button>
+        <button class="sm" onclick="appendFloorRange('Garden',6)">+ Garden1..6</button>
+        <button class="sm" onclick="appendFloorZone('VIP Room')">+ VIP Room</button>
+      </div>
+      <label class="mu">Full Table / Hall List (comma-separated)</label>
+      <textarea id="flTabs" rows="3">${esc(TB.join(", "))}</textarea>
+    </div>
+    <div class="tbs"><button class="pri" onclick="saveFloorSetup()">Save Tables & Halls</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function presetFloorTables(n){
+  const extras=TB.filter(x=>!/^T\d+$/.test(x)&&x!=="Counter"&&x!=="Takeaway");
+  const list=[...Array(n).keys()].map(i=>"T"+(i+1)).concat(extras,["Counter","Takeaway"]);
+  if($("#flTabs"))$("#flTabs").value=list.join(", ");
+}
+function appendFloorZone(nm){
+  const cur=($("#flTabs").value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  if(!cur.includes(nm)){const idx=cur.indexOf("Counter");cur.splice(idx>=0?idx:cur.length,0,nm);}
+  $("#flTabs").value=cur.join(", ");
+}
+function appendFloorRange(prefix,n){
+  const cur=($("#flTabs").value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  for(let i=1;i<=n;i++){const nm=prefix+i;if(!cur.includes(nm)){const idx=cur.indexOf("Counter");cur.splice(idx>=0?idx:cur.length,0,nm);}}
+  $("#flTabs").value=cur.join(", ");
+}
+function saveFloorSetup(){
+  const raw=($("#flTabs").value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  if(!raw.length)return toast("Add at least 1 table");
+  S.cfg.tables=raw;TB=raw;
+  if(!TB.includes(tb))tb=TB[0];
+  save();closeMdl();render();toast("Saved "+TB.length+" tables & halls!");
+}
+function openJoinTablesMdl(){
+  const mt=meta(tb),cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&!meta(t).linkedTo);
+  showMdl(`<b>🔗 Join Tables for Family / Group Dinner (${esc(tb)})</b>
+    <p class="mu">Combine 2 or more tables into ONE family bill. All joined tables lock together & free automatically on payment.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <div class="g2">
+        <input id="jnGrp" placeholder="Family / Group Name (e.g. Sharma Family)" value="${esc(mt.groupName||"")}">
+        <input id="jnPax" type="number" min="1" placeholder="Total Guests (Pax)" value="${mt.pax||8}">
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:180px;overflow:auto">
+        ${cands.map(t=>`<label class="tag" style="padding:7px;cursor:pointer"><input type="checkbox" class="jnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}
+      </div>
+    </div>
+    <div class="tbs"><button class="pri" onclick="confirmJoinTables()">Link Tables Together</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function confirmJoinTables(){
+  const picks=[...document.querySelectorAll(".jnk:checked")].map(x=>x.value);
+  if(!picks.length)return toast("Select at least 1 table to join with "+tb);
+  const mt=meta(tb),grp=($("#jnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#jnPax").value||0)||4;
+  mt.occ=true;mt.pax=pax;mt.groupName=grp;mt.updatedAt=mt.updatedAt||Date.now();mt.waiterName=mt.waiterName||activeName;
+  mt.joined=[...new Set([tb,...(mt.joined||[]),...picks])];
+  picks.forEach(pt=>{
+    const o=S.open[pt]||[];
+    if(o.length){S.open[tb]=(S.open[tb]||[]).concat(o);S.open[pt]=[];}
+    const pm=meta(pt);
+    if(pm.prepaid&&pm.prepaidAmt){mt.prepaid=true;mt.prepaidAmt=R((mt.prepaidAmt||0)+pm.prepaidAmt);pm.prepaid=false;pm.prepaidAmt=0;}
+    pm.occ=true;pm.linkedTo=tb;pm.groupName=grp;pm.updatedAt=mt.updatedAt;
+  });
+  closeMdl();save();render();toast("Joined "+mt.joined.join(" + ")+" ("+pax+" guests)");
+}
+function unjoinSingleTable(childT){
+  const cm=meta(childT),master=cm.linkedTo;
+  if(master&&S.openMeta[master]&&Array.isArray(S.openMeta[master].joined)){
+    S.openMeta[master].joined=S.openMeta[master].joined.filter(x=>x!==childT);
+    if(S.openMeta[master].joined.length<=1)S.openMeta[master].joined=[];
+  }
+  S.openMeta[childT]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+  save();render();toast(childT+" unjoined");
+}
+function openPartyPkgMdl(){
+  const mt=meta(tb);
+  showMdl(`<b>👥 Per-Guest / Family & Party Hall Billing (${esc(tb)})</b>
+    <p class="mu">Bill by candidates/plates (Adults + Kids), fixed Party Hall package & advance deposit.</p>
+    <div style="margin:10px 0;display:grid;gap:8px">
+      <input id="ppNm" placeholder="Booking / Family Name (e.g. Verma Family / Birthday Hall)" value="${esc(mt.groupName||"")}">
+      <div class="g2">
+        <div><label class="mu">Adults (Candidates) *</label><input id="ppAdCnt" type="number" min="0" value="${mt.pax||10}"></div>
+        <div><label class="mu">Rate / Adult (₹) *</label><input id="ppAdRate" type="number" min="0" value="350"></div>
+      </div>
+      <div class="g2">
+        <div><label class="mu">Kids Count</label><input id="ppKdCnt" type="number" min="0" value="0"></div>
+        <div><label class="mu">Rate / Kid (₹)</label><input id="ppKdRate" type="number" min="0" value="200"></div>
+      </div>
+      <div class="g2">
+        <div><label class="mu">Hall / Decor / Sound Fee (₹)</label><input id="ppHall" type="number" min="0" value="0"></div>
+        <div><label class="mu">Advance Paid Now (₹)</label><input id="ppAdv" type="number" min="0" value="0"></div>
+      </div>
+      <input id="ppPkgLbl" placeholder="Package Title (e.g. Deluxe Buffet / Family Thali / Hall)" value="Per-Guest Dining / Party Package">
+    </div>
+    <div class="tbs"><button class="pri" onclick="addPartyPkgToBill()">Add to ${esc(tb)} Bill</button><button onclick="closeMdl()">Cancel</button></div>`);
+}
+function addPartyPkgToBill(){
+  const bName=($("#ppNm").value||"").trim(),lbl=($("#ppPkgLbl").value||"").trim()||"Per-Guest Package";
+  const adC=+($("#ppAdCnt").value||0),adR=+($("#ppAdRate").value||0);
+  const kdC=+($("#ppKdCnt").value||0),kdR=+($("#ppKdRate").value||0);
+  const hallFee=+($("#ppHall").value||0),adv=+($("#ppAdv").value||0);
+  if(adC*adR<=0 && kdC*kdR<=0 && hallFee<=0)return toast("Enter Adult/Kid rate or Hall charge");
+  const o=S.open[tb]=S.open[tb]||[],mt=meta(tb);
+  if(adC>0&&adR>0)o.push({id:-Date.now()-1,openItem:true,n:`${lbl} (Adults)`,p:adR,q:adC,sent:0,note:bName});
+  if(kdC>0&&kdR>0)o.push({id:-Date.now()-2,openItem:true,n:`${lbl} (Kids)`,p:kdR,q:kdC,sent:0,note:bName});
+  if(hallFee>0)o.push({id:-Date.now()-3,openItem:true,n:`Party Hall / Setup Charge`,p:hallFee,q:1,sent:0,note:bName});
+  mt.occ=true;mt.pax=(adC+kdC)||mt.pax||1;mt.updatedAt=mt.updatedAt||Date.now();mt.waiterName=mt.waiterName||activeName;
+  if(bName)mt.groupName=bName;
+  if(adv>0){mt.prepaid=true;mt.prepaidAmt=R((mt.prepaidAmt||0)+adv);mt.prepaidCode=mt.prepaidCode||String(Math.floor(1000+Math.random()*9000));mt.prepaidVerified=true;mt.prepaidBy=activeName;}
+  closeMdl();save();render();toast(`Added ${adC+kdC} guests to ${tb}!`);
 }
 function holdOrder(){
   const o=S.open[tb]||[];if(!o.length)return;
@@ -1076,8 +1204,15 @@ function collectPrepaid(m){
   toast(`Prepaid ₹${c.due} · Verify Code: ${code}`);
 }
 function clearTable(t=tb){
-  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:""};
-  rd=false;ph="";nmv="";op=false;save();render();toast(t+" cleared for next guest");
+  const old=meta(t),kids=Array.isArray(old.joined)?[...old.joined]:[];
+  kids.forEach(kt=>{
+    if(kt!==t){
+      S.open[kt]=[];
+      S.openMeta[kt]={mode:kt==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+    }
+  });
+  S.open[t]=[];S.openMeta[t]={mode:t==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+  rd=false;ph="";nmv="";op=false;save();render();toast((kids.length>1?kids.join("+"):t)+" cleared for next guest");
 }
 function recordBill(m,t,splits,chargeAmt,isPrepaid,preCode=""){
   const c=calc(t),P=ph,ok=P.length===10;let u=null,waTxt="";
@@ -1263,8 +1398,8 @@ function openTableQrStandee(){
   const tList=TB.filter(x=>x!=="Takeaway");
   showMdl(`<b>📱 Customer QR Table Ordering Standees</b>
     <p class="mu">Guests scan to open Digital Menu, Self-Order, Track Status & Pay UPI!</p>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0">
-      ${tList.slice(0,6).map(t=>{
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0;max-height:60vh;overflow:auto">
+      ${tList.map(t=>{
         const u=`${location.origin}/order.html?outlet=${encodeURIComponent(activeOutlet)}&table=${encodeURIComponent(t)}`;
         return `<div class="card" style="text-align:center;margin:0;padding:8px"><b>${esc(t)}</b><div class="qr-box">${makeQrSvg(u,110)}</div><a href="${u}" target="_blank" style="font-size:12px">Open Link</a></div>`;
       }).join("")}
@@ -1654,7 +1789,10 @@ function vCfg(){
           <label style="display:flex;align-items:center;gap:6px;padding-top:18px"><input id="cInc" type="checkbox" style="width:auto" ${c.taxInc?"checked":""}> Tax Inclusive</label>
         </div>
         <label style="display:flex;align-items:center;gap:6px"><input id="cWPay" type="checkbox" style="width:auto" ${c.waiterCanPay?"checked":""}> Allow Waiter to mark Cash/UPI Paid</label>
-        <div><label class="mu">Tables (comma-separated)</label><input id="cTabs" value="${esc((c.tables||DEF_TB).join(", "))}"></div>
+        <div>
+          <div class="row" style="border:0;padding:0;margin-bottom:4px"><label class="mu">Tables & Party Halls (${(c.tables||DEF_TB).length})</label><button type="button" class="sm ok" onclick="openFloorSetupMdl()">🏢 Setup 10–50+ Tables & Halls</button></div>
+          <input id="cTabs" value="${esc((c.tables||DEF_TB).join(", "))}">
+        </div>
         <div class="g3" style="border:1px solid var(--ln);padding:8px;border-radius:10px">
           <label style="display:flex;align-items:center;gap:6px"><input id="cHhOn" type="checkbox" style="width:auto" ${c.happyHour&&c.happyHour.enabled?"checked":""}> Happy Hour</label>
           <input id="cHhSt" type="time" value="${esc((c.happyHour&&c.happyHour.start)||"15:00")}" title="Start">

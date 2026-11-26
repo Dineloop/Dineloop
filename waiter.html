@@ -290,21 +290,30 @@ function clearTable(){
   save();render();toast((kids.length>1?kids.join("+"):tb)+" cleared");
 }
 function openWaiterJoinMdl(){
-  const cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&!meta(t).linkedTo);
+  const cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&(!meta(t).linkedTo||meta(t).linkedTo===tb));
   const mt=meta(tb);
   $("#mdlHost").innerHTML=`<div class="mdl-bg" onclick="if(event.target===this)closeMdl()"><div class="mdl">
-    <b>🔗 Join Tables (${esc(tb)})</b><p class="mu">Link family tables into one combined bill.</p>
+    <b>🔗 Join Tables (${esc(tb)})</b><p class="mu">Tick tables to join or untick to separate them.</p>
     <input id="wJnGrp" placeholder="Family Name (optional)" value="${esc(mt.groupName||"")}" style="margin:6px 0">
     <input id="wJnPax" type="number" min="1" placeholder="Total Guests" value="${mt.pax||8}" style="margin-bottom:8px">
-    <div class="tbs">${cands.map(t=>`<label class="tag"><input type="checkbox" class="wjnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}</div>
-    <div class="tbs"><button class="pri" onclick="doWaiterJoin()">Join Tables</button><button onclick="closeMdl()">Cancel</button></div>
+    <div class="tbs">${cands.map(t=>`<label class="tag"><input type="checkbox" class="wjnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)||meta(t).linkedTo===tb?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}</div>
+    <div class="tbs"><button class="pri" onclick="doWaiterJoin()">Save / Join</button>${mt.joined&&mt.joined.length>1?`<button class="wr" onclick="closeMdl();separateWaiterTables()">🔓 Separate All</button>`:""}<button onclick="closeMdl()">Cancel</button></div>
   </div></div>`;
 }
+function separateWaiterTables(){
+  const mt=meta(tb),kids=(Array.isArray(mt.joined)?mt.joined:[]).concat(TB.filter(x=>meta(x).linkedTo===tb));
+  [...new Set(kids)].forEach(kt=>{if(kt!==tb){S.openMeta[kt]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};}});
+  mt.joined=[];mt.groupName="";if(!(S.open[tb]||[]).length){mt.occ=false;mt.pax=0;mt.updatedAt=0;}
+  save();render();toast("Tables separated & reset");
+}
 function doWaiterJoin(){
-  const picks=[...document.querySelectorAll(".wjnk:checked")].map(x=>x.value);if(!picks.length)return toast("Select tables");
-  const mt=meta(tb),grp=($("#wJnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#wJnPax").value||0)||6;
+  const picks=[...document.querySelectorAll(".wjnk:checked")].map(x=>x.value);
+  const mt=meta(tb),prevKids=Array.isArray(mt.joined)?mt.joined.filter(x=>x!==tb):[];
+  prevKids.forEach(kt=>{if(!picks.includes(kt))S.openMeta[kt]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};});
+  if(!picks.length){closeMdl();return separateWaiterTables();}
+  const grp=($("#wJnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#wJnPax").value||0)||6;
   mt.occ=true;mt.pax=pax;mt.groupName=grp;mt.waiterName=activeName;mt.updatedAt=mt.updatedAt||Date.now();
-  mt.joined=[...new Set([tb,...(mt.joined||[]),...picks])];
+  mt.joined=[tb,...picks];
   picks.forEach(pt=>{
     const o=S.open[pt]||[];if(o.length){S.open[tb]=(S.open[tb]||[]).concat(o);S.open[pt]=[];}
     const pm=meta(pt);pm.occ=true;pm.linkedTo=tb;pm.groupName=grp;pm.updatedAt=mt.updatedAt;
@@ -363,7 +372,8 @@ function render(){
       ${[2,4,6,8,12,20].map(n=>`<button class="sm ${mt.occ&&mt.pax===n?"on":""}" onclick="setOcc(${n})">🪑 ${n}</button>`).join("")}
       <button class="sm" onclick="const p=+(prompt('Exact guests/candidates count:',${+mt.pax||15})||0);if(p>0)setOcc(p)">Custom</button>
       ${tb!=="Takeaway"&&tb!=="Counter"?`<button class="sm ok" onclick="openWaiterJoinMdl()">🔗 Join</button>`:""}
-      ${mt.occ&&!c.o.length?`<button class="sm wr" onclick="setOcc(0)">Free</button>`:""}
+      ${mt.joined&&mt.joined.length>1?`<button class="sm wr" onclick="separateWaiterTables()">🔓 Separate</button>`:""}
+      ${(mt.occ||(mt.joined&&mt.joined.length>1))&&!c.o.length?`<button class="sm wr" onclick="separateWaiterTables()">Free</button>`:""}
     </div>
   </div>
   <div class="g2">

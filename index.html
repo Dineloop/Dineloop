@@ -727,7 +727,13 @@ function renderTabsOnly(){
   }).join("");
 }
 function toggleTableOcc(t){
-  const mt=meta(t);mt.occ=!mt.occ;if(mt.occ){mt.updatedAt=Date.now();mt.waiterName=mt.waiterName||activeName;if(!mt.pax)mt.pax=2;}else mt.pax=0;
+  const mt=meta(t),turningFree=!!mt.occ;
+  if(turningFree){
+    if(Array.isArray(mt.joined)&&mt.joined.length>1){separateJoinedTables(t,false);mt.occ=false;mt.pax=0;mt.updatedAt=0;save();render();return toast("Freed & separated "+t);}
+    mt.occ=false;mt.pax=0;mt.updatedAt=0;mt.groupName="";
+  }else{
+    mt.occ=true;mt.updatedAt=Date.now();mt.waiterName=mt.waiterName||activeName;if(!mt.pax)mt.pax=2;
+  }
   save();render();
 }
 
@@ -763,10 +769,11 @@ function vBill(){
       </div>
       <div class="tbs" id="tbBar" style="margin-top:8px"></div>
       <div class="row" style="background:rgba(226,183,92,.08);padding:6px 9px;border-radius:9px;margin-bottom:8px;border:0">
-        <span style="font-size:13px">${mt.linkedTo?`🔗 <b>Joined with ${esc(mt.linkedTo)}</b>`:(mt.occ||((S.open[tb]||[]).length)?`🪑 <b style="color:var(--wn)">Occupied</b>${mt.groupName?` · <b>${esc(mt.groupName)}</b>`:""}${mt.joined&&mt.joined.length>1?` (${esc(mt.joined.join("+"))})`:""}${mt.pax?` (${mt.pax}G)`:""}${mt.waiterName?` · ${esc(mt.waiterName)}`:""}`:`<span class="mu">🪑 Table Free</span>`)}</span>
+        <span style="font-size:13px">${mt.linkedTo?`🔗 <b>Joined with ${esc(mt.linkedTo)}</b>`:(mt.occ||((S.open[tb]||[]).length)||(mt.joined&&mt.joined.length>1)?`🪑 <b style="color:var(--wn)">Occupied</b>${mt.groupName?` · <b>${esc(mt.groupName)}</b>`:""}${mt.joined&&mt.joined.length>1?` (${mt.joined.filter(x=>x!==tb).map(x=>`<a href="javascript:void(0)" onclick="unjoinSingleTable('${esc(x)}')" style="color:var(--ac);text-decoration:none" title="Tap to separate ${esc(x)}">${esc(x)} ×</a>`).join(", ")})`:""}${mt.pax?` (${mt.pax}G)`:""}${mt.waiterName?` · ${esc(mt.waiterName)}`:""}`:`<span class="mu">🪑 Table Free</span>`)}</span>
         <div class="tbs" style="margin:0">
           ${mt.linkedTo?`<button class="sm pri" onclick="tb='${esc(mt.linkedTo)}';render()">Open ${esc(mt.linkedTo)}</button><button class="sm wr" onclick="unjoinSingleTable('${esc(tb)}')">Unjoin</button>`:""}
-          ${!mt.linkedTo&&!(S.open[tb]||[]).length?`<button class="sm" onclick="toggleTableOcc('${esc(tb)}')">${mt.occ?"Free":"Seat"}</button>`:""}
+          ${!mt.linkedTo&&!(S.open[tb]||[]).length?`<button class="sm" onclick="toggleTableOcc('${esc(tb)}')">${mt.occ||(mt.joined&&mt.joined.length>1)?"Free / Reset":"Seat"}</button>`:""}
+          ${!mt.linkedTo&&mt.joined&&mt.joined.length>1?`<button class="sm wr" onclick="separateJoinedTables('${esc(tb)}')">🔓 Separate All</button>`:""}
           ${!mt.linkedTo&&tb!=="Takeaway"&&tb!=="Counter"?`<button class="sm" onclick="openJoinTablesMdl()">🔗 Join Tables</button>`:""}
           ${!mt.linkedTo&&(S.open[tb]||[]).length?`<button class="sm" onclick="holdOrder()">Hold</button><button class="sm" onclick="openMoveMergeMdl()">Move</button><button class="sm" onclick="openSplitBillMdl()">Split</button>`:""}
           ${(S.holds||[]).length?`<button class="sm ok" onclick="openHoldsMdl()">Holds (${S.holds.length})</button>`:""}
@@ -863,26 +870,37 @@ function saveFloorSetup(){
   save();closeMdl();render();toast("Saved "+TB.length+" tables & halls!");
 }
 function openJoinTablesMdl(){
-  const mt=meta(tb),cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&!meta(t).linkedTo);
+  const mt=meta(tb),cands=TB.filter(t=>t!==tb&&t!=="Takeaway"&&t!=="Counter"&&(!meta(t).linkedTo||meta(t).linkedTo===tb));
   showMdl(`<b>🔗 Join Tables for Family / Group Dinner (${esc(tb)})</b>
-    <p class="mu">Combine 2 or more tables into ONE family bill. All joined tables lock together & free automatically on payment.</p>
+    <p class="mu">Tick tables to combine, or untick tables to separate them back to normal.</p>
     <div style="margin:10px 0;display:grid;gap:8px">
       <div class="g2">
         <input id="jnGrp" placeholder="Family / Group Name (e.g. Sharma Family)" value="${esc(mt.groupName||"")}">
         <input id="jnPax" type="number" min="1" placeholder="Total Guests (Pax)" value="${mt.pax||8}">
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;max-height:180px;overflow:auto">
-        ${cands.map(t=>`<label class="tag" style="padding:7px;cursor:pointer"><input type="checkbox" class="jnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}
+        ${cands.map(t=>`<label class="tag" style="padding:7px;cursor:pointer"><input type="checkbox" class="jnk" value="${esc(t)}" ${(mt.joined||[]).includes(t)||meta(t).linkedTo===tb?"checked":""} style="width:auto"> ${esc(t)}</label>`).join("")}
       </div>
     </div>
-    <div class="tbs"><button class="pri" onclick="confirmJoinTables()">Link Tables Together</button><button onclick="closeMdl()">Cancel</button></div>`);
+    <div class="tbs">
+      <button class="pri" onclick="confirmJoinTables()">Save / Join Tables</button>
+      ${mt.joined&&mt.joined.length>1?`<button class="wr" onclick="closeMdl();separateJoinedTables('${esc(tb)}')">🔓 Separate All</button>`:""}
+      <button onclick="closeMdl()">Cancel</button>
+    </div>`);
 }
 function confirmJoinTables(){
   const picks=[...document.querySelectorAll(".jnk:checked")].map(x=>x.value);
-  if(!picks.length)return toast("Select at least 1 table to join with "+tb);
-  const mt=meta(tb),grp=($("#jnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#jnPax").value||0)||4;
+  const mt=meta(tb);
+  const prevKids=Array.isArray(mt.joined)?mt.joined.filter(x=>x!==tb):[];
+  prevKids.forEach(kt=>{
+    if(!picks.includes(kt)){
+      S.openMeta[kt]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+    }
+  });
+  if(!picks.length){closeMdl();return separateJoinedTables(tb);}
+  const grp=($("#jnGrp").value||"").trim()||("Family ("+[tb,...picks].join("+")+")"),pax=+($("#jnPax").value||0)||4;
   mt.occ=true;mt.pax=pax;mt.groupName=grp;mt.updatedAt=mt.updatedAt||Date.now();mt.waiterName=mt.waiterName||activeName;
-  mt.joined=[...new Set([tb,...(mt.joined||[]),...picks])];
+  mt.joined=[tb,...picks];
   picks.forEach(pt=>{
     const o=S.open[pt]||[];
     if(o.length){S.open[tb]=(S.open[tb]||[]).concat(o);S.open[pt]=[];}
@@ -892,14 +910,25 @@ function confirmJoinTables(){
   });
   closeMdl();save();render();toast("Joined "+mt.joined.join(" + ")+" ("+pax+" guests)");
 }
+function separateJoinedTables(t=tb,showToast=true){
+  const mt=meta(t),kids=(Array.isArray(mt.joined)?mt.joined:[]).concat(TB.filter(x=>meta(x).linkedTo===t));
+  [...new Set(kids)].forEach(kt=>{
+    if(kt!==t){
+      S.openMeta[kt]={mode:kt==="Takeaway"?"Parcel":"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
+    }
+  });
+  mt.joined=[];mt.groupName="";
+  if(!(S.open[t]||[]).length){mt.occ=false;mt.pax=0;mt.updatedAt=0;}
+  save();render();if(showToast)toast("Tables separated & reset!");
+}
 function unjoinSingleTable(childT){
   const cm=meta(childT),master=cm.linkedTo;
   if(master&&S.openMeta[master]&&Array.isArray(S.openMeta[master].joined)){
     S.openMeta[master].joined=S.openMeta[master].joined.filter(x=>x!==childT);
-    if(S.openMeta[master].joined.length<=1)S.openMeta[master].joined=[];
+    if(S.openMeta[master].joined.length<=1){S.openMeta[master].joined=[];S.openMeta[master].groupName="";}
   }
   S.openMeta[childT]={mode:"Dine-In",occ:false,pax:0,waiterName:"",updatedAt:0,prepaid:false,prepaidAmt:0,prepaidCode:"",prepaidAt:0,prepaidVerified:false,prepaidBy:"",discType:"",discVal:0,coupon:"",note:"",joined:[],linkedTo:"",groupName:""};
-  save();render();toast(childT+" unjoined");
+  save();render();toast(childT+" separated");
 }
 function openPartyPkgMdl(){
   const mt=meta(tb);
